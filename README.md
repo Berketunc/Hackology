@@ -67,6 +67,8 @@ The primary figure remains the distance-stratified result, including the locus s
 
 Run `python app.py` and open **http://127.0.0.1:7860**. The workspace implements the supplied “Website outline Protein binding research tool” design: protein scanning, single-pair prediction, batch CSV upload, model comparison, saved runs and methods. The original Gradio interface remains at **http://127.0.0.1:7860/legacy**.
 
+The updated animated layout adds the **pHLASP** wordmark and opening helix/residue/9-mer sequence. It finishes in about 4.75 seconds, supports Skip/Escape and a footer Replay button, and bypasses automatic playback for reduced-motion preferences. Scoring loads independently behind the intro. [Intro preview](reports/workspace_intro.png).
+
 - Scan one protein or FASTA record (9–1,000 residues) against up to six of the 72 dataset alleles. Every overlapping 9-mer keeps its original 1-based position; identical pairs share inference work. Rankings, tier filters and the clickable window × allele map use the selected sequence baseline.
 - Inspect selected pairs or single inputs across the three sequence baselines and, optionally, both ESM-2 arms. New ESM-2 inputs can require a public checkpoint download and several minutes of local inference on first use. Protein scans and batch ranking stay on the fast sequence baselines.
 - Paste or upload up to 200 `peptide,allele` CSV rows. Invalid batches are rejected before inference, with row-specific feedback. Shortlist up to 30 unique peptide–allele pairs and compare their models side by side.
@@ -82,6 +84,7 @@ Optional browser verification (while the app is running):
 pip install -r requirements-dev.txt
 python -m playwright install chromium
 python scripts/check_workspace.py
+python scripts/check_intro.py
 ```
 
 This uses an isolated browser context and writes its checks to `results/benchmark/workspace_checks.json`. The Python suite also tests FASTA/CSV validation, window-position preservation, tier boundaries, real benchmark prediction agreement, and held-out routing of novel allele pairings.

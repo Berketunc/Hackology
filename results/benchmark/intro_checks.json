@@ -1,0 +1,10 @@
+{
+  "passed": true,
+  "checks": [
+    "Helices and 16 residues animate; nine align with final window; tagline appears before automatic exit",
+    "Replay restarts; Skip and Escape dismiss immediately and return keyboard focus",
+    "390px portrait and 390px-high landscape preserve visible dismissal controls without horizontal overflow",
+    "Reduced motion bypasses automatic intro; explicit replay is static; workspace still loads"
+  ],
+  "browser_errors": []
+}

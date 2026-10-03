@@ -1,0 +1,74 @@
+/* Opening sequence adapted from the user's “Website Layout with animation” export. */
+.brand { display: inline-flex; align-items: baseline; gap: 10px; }
+.brand .brand-wordmark { color: var(--color-text); font-size: 28px; }
+.brand .brand-tagline { font: 400 13px var(--font-body); color: var(--color-neutral-700); letter-spacing: 0; }
+footer #replay-intro { margin-left: auto; white-space: nowrap; }
+
+dialog.intro {
+  position: fixed; inset: 0; width: 100%; height: 100%; width: 100dvw; height: 100dvh;
+  max-width: none; max-height: none; margin: 0; padding: 24px;
+  border: 0; background: var(--color-bg); color: var(--color-text);
+  overflow: auto; overscroll-behavior: contain;
+  opacity: 1; transition: opacity 550ms ease;
+}
+.intro[open] { display: grid; place-items: center; }
+.intro::backdrop { background: var(--color-bg); transition: opacity 550ms ease; }
+.intro.is-leaving, .intro.is-leaving::backdrop { opacity: 0; }
+.intro-content { width: min(820px, 100%); display: flex; flex-direction: column; align-items: center; gap: 12px; }
+.intro-heading { text-align: center; }
+.intro-heading h1 { font: 700 64px/1 var(--font-heading); letter-spacing: .02em; margin: 0 0 8px; }
+.intro-heading h1 span { color: var(--color-accent-700); }
+.intro-heading p { font-size: 12px; letter-spacing: .18em; color: var(--color-accent-700); margin: 0; }
+#intro-sequence { width: 100%; height: auto; overflow: visible; font-family: var(--font-body); flex-shrink: 0; }
+.intro-tagline { display: flex; align-items: center; justify-content: center; gap: 24px; }
+.intro-tagline > span:first-child { font: 600 44px/1.1 var(--font-heading); }
+.intro-tagline .tag { letter-spacing: .1em; }
+.intro-description { margin: 0; color: var(--color-neutral-700); font-size: 11px; text-align: center; }
+#skip-intro { margin-top: 4px; min-height: 40px; }
+.intro-helix { fill: none; stroke: var(--color-accent-700); stroke-width: 1.5; stroke-dasharray: 1; }
+.intro-helix.secondary { stroke: var(--color-accent-500); stroke-width: 1; }
+.intro-label { fill: var(--color-accent-700); font-size: 12px; letter-spacing: 2px; }
+.intro-residue text { font: 400 22px var(--font-mono); fill: var(--color-text); }
+.intro-residue.is-inside text { font-weight: 600; fill: var(--color-accent-700); }
+.intro-window { transform: translateX(200px); }
+.intro-window rect { fill: var(--color-accent-100); fill-opacity: .7; stroke: var(--color-accent-700); stroke-width: 1.5; }
+.intro-window path { stroke: var(--color-accent-700); stroke-width: 1.5; }
+.intro-window text { fill: var(--color-accent-700); font-size: 11px; letter-spacing: 2px; }
+
+.intro-playing .intro-heading { animation: intro-fade 600ms both; }
+.intro-playing .intro-helix { animation: intro-draw 1000ms var(--delay, 0ms) both ease-out; }
+.intro-playing .intro-label { animation: intro-fade 500ms 800ms both; }
+.intro-playing .intro-residue { animation: intro-dock 650ms var(--delay, 0ms) both cubic-bezier(.3,.8,.3,1); }
+.intro-playing .intro-residue:not(.is-inside) text { animation: intro-dim 500ms 2700ms both; }
+.intro-playing .intro-window { animation: intro-window 1400ms 1400ms both cubic-bezier(.45,0,.2,1); }
+.intro-playing .intro-window-content { animation: intro-fade 400ms 1350ms both; }
+.intro-playing .intro-tagline { animation: intro-fade 600ms 2800ms both; }
+.intro-playing .intro-description { animation: intro-fade 400ms 2900ms both; }
+
+@keyframes intro-draw { from { stroke-dashoffset: 1; } to { stroke-dashoffset: 0; } }
+@keyframes intro-fade { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes intro-dock { from { opacity: 0; transform: translate(var(--dx), -120px); } to { opacity: 1; transform: translate(0,0); } }
+@keyframes intro-window { 0% { transform: translateX(0); } 55% { transform: translateX(240px); } 100% { transform: translateX(200px); } }
+@keyframes intro-dim { to { opacity: .22; } }
+
+@media (max-width: 560px) {
+  dialog.intro { padding: 24px 12px; }
+  .intro-heading h1 { font-size: 54px; }
+  .intro-heading p { font-size: 10px; letter-spacing: .13em; }
+  .intro-tagline { gap: 12px; flex-wrap: wrap; }
+  .intro-tagline > span:first-child { font-size: 34px; }
+  .intro-description { max-width: 290px; }
+  footer #replay-intro { margin-left: 0; }
+}
+@media (max-height: 500px) and (min-width: 561px) {
+  dialog.intro { padding: 12px; }
+  .intro-content { gap: 4px; width: min(650px,100%); }
+  .intro-heading h1 { font-size: 38px; }
+  #intro-sequence { max-height: 190px; }
+  .intro-tagline > span:first-child { font-size: 30px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .intro, .intro::backdrop { transition: none !important; }
+  .intro-playing *, .intro-playing *::before, .intro-playing *::after { animation: none !important; }
+  .intro-residue:not(.is-inside) text { opacity: .22; }
+}

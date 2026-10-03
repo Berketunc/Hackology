@@ -4,15 +4,26 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="description" content="Scan protein sequences, compare peptide–HLA stability models, and shortlist candidates using the Rasmussen benchmark.">
-  <title>Peptide–HLA Stability · Research workspace</title>
+  <title>pHLASP · Peptide–HLA Stability Workspace</title>
   <link rel="stylesheet" href="/assets/design-system.css">
   <link rel="stylesheet" href="/assets/workspace.css">
+  <link rel="stylesheet" href="/assets/intro.css">
+  <script src="/assets/intro.js" defer></script>
   <script src="/assets/workspace.js" defer></script>
 </head>
 <body>
+<dialog id="intro" class="intro" aria-labelledby="intro-title" aria-describedby="intro-description">
+  <div class="intro-content">
+    <div class="intro-heading"><h1 id="intro-title">p<span>HLA</span>SP</h1><p>PEPTIDE–HLA STABILITY PREDICTOR</p></div>
+    <svg id="intro-sequence" viewBox="0 0 720 300" aria-hidden="true" focusable="false"></svg>
+    <div class="intro-tagline"><span>Find your epitope.</span><span class="tag tag-accent">9-MER SELECTED</span></div>
+    <p id="intro-description" class="intro-description">A schematic view of a 9-residue peptide window.</p>
+    <button id="skip-intro" type="button" class="btn btn-ghost" autofocus>Skip intro <span aria-hidden="true">→</span></button>
+  </div>
+</dialog>
 <a class="skip-link" href="#main">Skip to workspace</a>
 <header class="site-header">
-  <a class="brand" href="#scan">PEPTIDE–HLA <span>STABILITY</span></a>
+  <a class="brand" href="#scan" aria-label="pHLASP · Scan protein"><span class="brand-wordmark">p<span>HLA</span>SP</span><span class="brand-tagline">Find your epitope.</span></a>
   <nav aria-label="Workspace pages" id="navigation">
     <a href="#scan" aria-current="page">Scan protein</a><a href="#single">Single pair</a>
     <a href="#batch">Batch</a><a href="#compare">Compare models</a><a href="#runs">Saved runs</a><a href="#methods">Methods</a>
@@ -122,7 +133,7 @@
     <a href="/legacy" class="text-link">Open the original benchmark demo →</a>
   </section>
 </main>
-<footer><span>PEPTIDE–HLA <span class="accent">STABILITY</span></span><p>Zeros may be censored. Fold ranges are uncalibrated. Dataset counts are not population frequencies. No laboratory savings or clinical utility are established.</p></footer>
+<footer><span>p<span class="accent">HLA</span>SP</span><p>Zeros may be censored. Fold ranges are uncalibrated. Dataset counts are not population frequencies. No laboratory savings or clinical utility are established.</p><button id="replay-intro" type="button" class="btn btn-ghost">Replay intro</button></footer>
 <dialog id="save-dialog"><form id="save-form"><span class="eyebrow">SAVE TO THIS BROWSER</span><h2>Save this run</h2><label for="run-name">Run name</label><input id="run-name" class="input" maxlength="80" required><div class="actions"><button type="submit" class="btn btn-primary">Save run</button><button type="button" class="btn btn-secondary" id="cancel-save">Cancel</button></div></form></dialog>
 </body>
 </html>
