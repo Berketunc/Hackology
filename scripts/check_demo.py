@@ -9,7 +9,7 @@ from src.config import RESULTS
 
 
 def main():
-    client=Client('http://127.0.0.1:7860',verbose=False)
+    client=Client('http://127.0.0.1:7860/legacy',verbose=False)
     info=client.view_api(return_format='dict',print_info=False)
     named=info['named_endpoints']
     endpoint='/predict' if '/predict' in named else next(iter(named))

@@ -1,0 +1,14 @@
+{
+  "checks": [
+    "Real default scan: 62 windows \u00d7 6 alleles; ranked table and heatmap",
+    "Tier filters, pair inspection, shortlist and CSV export",
+    "Save, reload persistence and full scan restoration",
+    "All five real model predictions, dataset exposure and invalid input feedback",
+    "CSV file upload, batch scoring and shortlisting",
+    "Shortlist comparison across the three sequence baselines",
+    "Methods content and 390px mobile layout without page overflow"
+  ],
+  "passed": true,
+  "browser_errors": [],
+  "browser": "isolated headless Chromium"
+}

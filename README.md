@@ -63,6 +63,31 @@ The primary figure remains the distance-stratified result, including the locus s
 
 ## Reproduce
 
+### Website workspace
+
+Run `python app.py` and open **http://127.0.0.1:7860**. The workspace implements the supplied “Website outline Protein binding research tool” design: protein scanning, single-pair prediction, batch CSV upload, model comparison, saved runs and methods. The original Gradio interface remains at **http://127.0.0.1:7860/legacy**.
+
+- Scan one protein or FASTA record (9–1,000 residues) against up to six of the 72 dataset alleles. Every overlapping 9-mer keeps its original 1-based position; identical pairs share inference work. Rankings, tier filters and the clickable window × allele map use the selected sequence baseline.
+- Inspect selected pairs or single inputs across the three sequence baselines and, optionally, both ESM-2 arms. New ESM-2 inputs can require a public checkpoint download and several minutes of local inference on first use. Protein scans and batch ranking stay on the fast sequence baselines.
+- Paste or upload up to 200 `peptide,allele` CSV rows. Invalid batches are rejected before inference, with row-specific feedback. Shortlist up to 30 unique peptide–allele pairs and compare their models side by side.
+- Export rankings, batches, shortlists and comparisons to CSV. Saved scan/batch runs retain their inputs, results and shortlist in this browser's local storage; clearing browser data removes them. No synthetic example runs or fabricated scores are used.
+
+All displayed ranges remain **uncalibrated five-fit min–max ranges**. The reverted conformal interval feature is not included. The new workspace routes any previously measured peptide to its held-out model, even for a novel allele pairing; entirely new peptides average the five log-scale predictions. Whole-protein scanning is exploratory and does not establish accuracy on a new protein distribution.
+
+The frontend is plain HTML/CSS/JavaScript in `web/`, with a FastAPI backend in `src/webapp.py` and vectorized inference in `src/workspace.py`. No frontend build or Node dependency is needed. [Desktop screenshot](reports/workspace_desktop.png), [single-pair screenshot](reports/workspace_single.png), [mobile screenshot](reports/workspace_mobile.png).
+
+Optional browser verification (while the app is running):
+
+```sh
+pip install -r requirements-dev.txt
+python -m playwright install chromium
+python scripts/check_workspace.py
+```
+
+This uses an isolated browser context and writes its checks to `results/benchmark/workspace_checks.json`. The Python suite also tests FASTA/CSV validation, window-position preservation, tier boundaries, real benchmark prediction agreement, and held-out routing of novel allele pairings.
+
+### Benchmark reproduction
+
 Python 3.11 was used. From the repository root:
 
 ```sh

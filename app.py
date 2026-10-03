@@ -1,4 +1,4 @@
-"""Local retrospective benchmark explorer. Run: python app.py"""
+"""Protein stability workspace; original Gradio demo remains at /legacy."""
 import gradio as gr
 from src.demo import resources, predict
 
@@ -36,5 +36,11 @@ def build_app():
     return demo
 
 
+def build_workspace():
+    from src.webapp import create_app
+    return gr.mount_gradio_app(create_app(), build_app(), path='/legacy')
+
+
 if __name__=='__main__':
-    build_app().launch(server_name='127.0.0.1',server_port=7860,share=False)
+    import uvicorn
+    uvicorn.run(build_workspace(), host='127.0.0.1', port=7860)

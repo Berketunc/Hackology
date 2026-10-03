@@ -1,0 +1,128 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Scan protein sequences, compare peptide–HLA stability models, and shortlist candidates using the Rasmussen benchmark.">
+  <title>Peptide–HLA Stability · Research workspace</title>
+  <link rel="stylesheet" href="/assets/design-system.css">
+  <link rel="stylesheet" href="/assets/workspace.css">
+  <script src="/assets/workspace.js" defer></script>
+</head>
+<body>
+<a class="skip-link" href="#main">Skip to workspace</a>
+<header class="site-header">
+  <a class="brand" href="#scan">PEPTIDE–HLA <span>STABILITY</span></a>
+  <nav aria-label="Workspace pages" id="navigation">
+    <a href="#scan" aria-current="page">Scan protein</a><a href="#single">Single pair</a>
+    <a href="#batch">Batch</a><a href="#compare">Compare models</a><a href="#runs">Saved runs</a><a href="#methods">Methods</a>
+  </nav>
+  <span class="research-label">Retrospective research · 9-mer class I</span>
+</header>
+<main id="main">
+  <div id="notice" class="notice" role="status" aria-live="polite" hidden></div>
+  <section id="page-scan" class="page" aria-labelledby="scan-title">
+    <div class="page-heading"><span class="eyebrow">01 / SEQUENCE EXPLORER</span><h1 id="scan-title">Scan a protein for stable epitopes</h1>
+      <p>Every 9-residue window, scored against your selected HLA alleles. Rank predicted half-lives and build a shortlist for further investigation.</p></div>
+    <form id="scan-form" class="input-grid">
+      <div class="blueprint panel sequence-panel">
+        <div class="label-line"><label for="protein">Protein sequence</label><span id="sequence-count" class="muted small">0 residues · 0 windows</span></div>
+        <textarea id="protein" class="input mono" rows="4" spellcheck="false" placeholder="Paste a protein sequence or a single FASTA record" required></textarea>
+        <div class="actions"><button id="scan-submit" class="btn btn-primary" type="submit">Scan windows <span aria-hidden="true">↗</span></button>
+          <button id="load-example" class="btn btn-secondary" type="button">Load example</button></div>
+        <p class="small muted">Sequence models score the full scan. Compare individual candidates with ESM-2 in the selected-pair panel.</p>
+      </div>
+      <div class="blueprint panel controls-panel">
+        <div class="field"><label for="scan-model">Ranking model</label><select id="scan-model" class="input"></select></div>
+        <fieldset><legend>HLA alleles <span class="muted small">· choose up to 6</span></legend><div id="allele-choices" class="allele-choices"></div></fieldset>
+        <div class="field"><label for="add-allele">Add a dataset allele</label><div class="inline-field"><select id="add-allele" class="input" aria-label="Dataset allele to add"></select><button class="btn btn-secondary" type="button" id="add-allele-button">Add</button></div></div>
+      </div>
+    </form>
+    <div id="scan-summary" class="run-strip" hidden></div>
+    <div class="results-grid">
+      <section class="ranked-area" aria-labelledby="ranked-title">
+        <div class="section-heading"><h2 id="ranked-title">Ranked windows</h2><span id="shown-count" class="muted small"></span></div>
+        <div class="filter-row"><label class="sr-only" for="ranking-allele">Allele shown in ranking</label><select id="ranking-allele" class="input"></select>
+          <div class="tier-filters" role="group" aria-label="Filter by stability tier">
+            <button type="button" data-tier="all" aria-pressed="true">All</button><button type="button" data-tier="high" aria-pressed="false">≥6 h</button><button type="button" data-tier="intermediate" aria-pressed="false">2–6 h</button><button type="button" data-tier="low" aria-pressed="false">&lt;2 h</button>
+          </div>
+        </div>
+        <div class="blueprint table-frame"><div class="table-scroll"><table class="table ranked-table">
+          <thead><tr><th scope="col">#</th><th scope="col">Pos</th><th scope="col">Peptide</th><th scope="col">Half-life (h)</th><th scope="col">Five-fit range</th><th scope="col">Tier</th><th scope="col"><span class="sr-only">Shortlist</span></th></tr></thead>
+          <tbody id="ranked-rows"><tr><td colspan="7" class="empty">Run a scan to explore candidate windows.</td></tr></tbody>
+        </table></div></div>
+        <div class="actions table-actions"><button id="show-more" type="button" class="btn btn-ghost" hidden>Show more windows</button><button id="export-scan" type="button" class="btn btn-ghost" disabled>Export ranked CSV ↓</button></div>
+      </section>
+      <aside class="side-panels">
+        <section class="blueprint panel" aria-labelledby="selected-title">
+          <span class="eyebrow">SELECTED PAIR</span><h2 id="selected-title" class="selected-title">Choose a window</h2>
+          <div id="selected-content"><p class="muted">Select a ranked peptide or a cell in the map to inspect the model predictions.</p></div>
+          <button id="compare-selected" class="btn btn-secondary" type="button" disabled>Compare all 5 models</button>
+          <p class="small muted">Ranges show the minimum–maximum across five fits, not calibrated confidence intervals. ESM-2 on a new pair may take several minutes on first use.</p>
+        </section>
+        <section class="blueprint panel" aria-labelledby="shortlist-title">
+          <div class="section-heading"><h2 id="shortlist-title">Shortlist <span id="short-count">· 0</span></h2><button id="save-scan" class="btn btn-secondary" type="button" disabled>Save run</button></div>
+          <div id="shortlist"><p class="muted small">Use “Add” on a row to keep a candidate here.</p></div>
+          <div class="actions"><button id="view-comparison" class="btn btn-ghost" type="button" disabled>Compare shortlist →</button><button id="export-shortlist" class="btn btn-ghost" type="button" disabled>Export CSV ↓</button></div>
+        </section>
+      </aside>
+    </div>
+    <section aria-labelledby="map-title"><div class="section-heading"><h2 id="map-title">Window × allele map</h2><span class="small muted">Darker = longer predicted half-life. Select a cell to inspect.</span></div>
+      <div class="blueprint panel"><div id="heatmap" class="heatmap-scroll"><p class="empty muted">Your scan will appear here.</p></div>
+        <div class="heat-legend"><span>0 h</span><span class="gradient"></span><span>12 h+</span><span class="muted">Window start position · 1-based</span></div>
+      </div>
+    </section>
+  </section>
+
+  <section id="page-single" class="page" aria-labelledby="single-title" hidden>
+    <div class="page-heading"><span class="eyebrow">02 / PAIR INSPECTION</span><h1 id="single-title">Single peptide–HLA prediction</h1><p>Compare the sequence baselines and frozen ESM-2 representations on the same peptide and allele.</p></div>
+    <form id="single-form" class="blueprint panel">
+      <div class="single-fields"><div class="field"><label for="single-peptide">Peptide · 9 amino acids</label><input id="single-peptide" class="input mono" maxlength="9" spellcheck="false" required></div>
+        <div class="field"><label for="single-allele">HLA allele</label><select id="single-allele" class="input"></select></div><button id="single-submit" class="btn btn-primary" type="submit">Compare predictions ↗</button></div>
+      <label class="check-label"><input id="single-plm" type="checkbox" checked> Include ESM-2 models · new pairs may take several minutes on first use</label>
+      <div id="single-examples" class="actions"></div>
+    </form>
+    <div id="single-result" aria-live="polite"><div class="empty blueprint">Choose a pair or try one of the dataset examples.</div></div>
+  </section>
+
+  <section id="page-batch" class="page" aria-labelledby="batch-title" hidden>
+    <div class="page-heading"><span class="eyebrow">03 / BATCH SCORING</span><h1 id="batch-title">Batch upload</h1><p>Provide one peptide,allele pair per line. Score up to 200 pairs using a sequence model, then shortlist candidates for a deeper comparison.</p></div>
+    <div class="batch-grid"><form id="batch-form" class="blueprint panel">
+      <label for="batch-file" id="dropzone" class="dropzone"><span class="upload-symbol" aria-hidden="true">↑</span><strong>Drop a CSV file here</strong><span class="small">or click to browse · peptide,allele</span><input type="file" id="batch-file" accept=".csv,text/csv" class="sr-only"></label>
+      <label for="batch-text">Or paste rows</label><textarea id="batch-text" rows="8" class="input mono" spellcheck="false" required></textarea>
+      <div class="field"><label for="batch-model">Scoring model</label><select id="batch-model" class="input"></select></div>
+      <button id="batch-submit" class="btn btn-primary" type="submit">Score pairs ↗</button>
+    </form><div><div class="section-heading"><h2>Batch results</h2><span id="batch-count" class="small muted"></span></div>
+      <div class="blueprint table-frame"><div class="table-scroll"><table class="table"><thead><tr><th>Peptide</th><th>Allele</th><th>Half-life (h)</th><th>Five-fit range</th><th>Tier</th><th><span class="sr-only">Shortlist</span></th></tr></thead><tbody id="batch-rows"><tr><td colspan="6" class="empty">No results yet.</td></tr></tbody></table></div></div>
+      <div class="actions table-actions"><button id="export-batch" class="btn btn-ghost" type="button" disabled>Export CSV ↓</button><button id="save-batch" class="btn btn-ghost" type="button" disabled>Save run</button></div></div></div>
+  </section>
+
+  <section id="page-compare" class="page" aria-labelledby="compare-title" hidden>
+    <div class="page-heading"><span class="eyebrow">04 / REPRESENTATION COMPARISON</span><h1 id="compare-title">What does protein pretraining add?</h1><p>Compare the same shortlisted peptide–HLA pairs across models. A “model arm” is one prediction approach in the benchmark.</p></div>
+    <div class="comparison-controls"><label class="check-label"><input id="compare-plm" type="checkbox" checked> Include both ESM-2 models · new pairs take longer</label><button id="run-comparison" class="btn btn-primary" type="button" disabled>Compare shortlist ↗</button><button id="export-comparison" class="btn btn-ghost" type="button" disabled>Export CSV ↓</button></div>
+    <div id="comparison-results" class="blueprint table-frame"><p class="empty">Your shortlist is empty. Add candidates from a scan, single pair, or batch.</p></div>
+    <p class="small muted">Predictions are half-lives in hours, not measured outcomes. Higher predictions alone do not establish that a model performs better. The held-out benchmark uses macro within-allele Spearman and paired confidence intervals.</p>
+  </section>
+
+  <section id="page-runs" class="page" aria-labelledby="runs-title" hidden>
+    <div class="page-heading"><span class="eyebrow">05 / YOUR WORKSPACE</span><h1 id="runs-title">Saved runs</h1><p>Reopen a scan or batch with its inputs, results, and shortlist. Runs are saved in this browser; clearing browser data removes them.</p></div>
+    <div class="blueprint table-frame"><div class="table-scroll"><table class="table"><thead><tr><th>Run</th><th>Saved</th><th>Alleles</th><th>Windows / pairs</th><th>Shortlisted</th><th>Actions</th></tr></thead><tbody id="saved-runs"></tbody></table></div></div>
+  </section>
+
+  <section id="page-methods" class="page" aria-labelledby="methods-title" hidden>
+    <div class="page-heading"><span class="eyebrow">06 / HOW TO READ THE RESULTS</span><h1 id="methods-title">Methods &amp; caveats</h1><p>A research interface over the saved peptide–HLA stability models. Every displayed prediction comes from a fitted model.</p></div>
+    <div class="methods-grid">
+      <article class="blueprint panel"><span class="eyebrow">SCOPE</span><h2>Retrospective research</h2><p>Predicted peptide–HLA half-life for 9-mer, class-I pairs. The primary input is the HLA 34-residue contact pseudosequence. This is not an experimental or clinical validation.</p><p id="dataset-facts" class="small muted"></p></article>
+      <article class="blueprint panel"><span class="eyebrow">UNCERTAINTY</span><h2>Five-fit range</h2><p>The range is the minimum–maximum across five peptide cross-validation fits. It is a sensitivity diagnostic, <strong>not a calibrated confidence interval</strong>. For a known peptide, four fits can include that peptide.</p></article>
+      <article class="blueprint panel"><span class="eyebrow">PREDICTION</span><h2>Exposure and folds</h2><p>A peptide present in the dataset uses the fit that held out that entire peptide, even for a new allele pairing. Completely new peptides use the mean of the five models on the log scale. Negative log predictions are clipped to zero for display.</p></article>
+      <article class="blueprint panel"><span class="eyebrow">MODELS</span><h2>Five approaches</h2><p>BLOSUM MLP is the supervised reference. BLOSUM Ridge and allele-ID Ridge are sequence controls. ESM-2 independent mean and joint sequence encoding use frozen protein representations with a Ridge head. Joint encoding does not imply a physical complex model.</p></article>
+      <article class="blueprint panel"><span class="eyebrow">DATA</span><h2>Zeros and measurement coverage</h2><p>Reported zeros are retained, although they may be left-censored. Engineered C67S constructs are excluded. Measurement counts describe this dataset, not human population frequencies. No replicate-level variance is available.</p></article>
+      <article class="blueprint panel"><span class="eyebrow">INTERPRETATION</span><h2>Ranking is a starting point</h2><p>Low: &lt;2 hours. Intermediate: ≥2 and &lt;6 hours. High: ≥6 hours. Scanning a full protein is an exploratory use beyond the measured peptide dataset. Predictions require experimental follow-up.</p><p class="small muted">Training counts are available outer-fold rows; the MLP reserves 15% of training groups for early stopping.</p></article>
+    </div>
+    <a href="/legacy" class="text-link">Open the original benchmark demo →</a>
+  </section>
+</main>
+<footer><span>PEPTIDE–HLA <span class="accent">STABILITY</span></span><p>Zeros may be censored. Fold ranges are uncalibrated. Dataset counts are not population frequencies. No laboratory savings or clinical utility are established.</p></footer>
+<dialog id="save-dialog"><form id="save-form"><span class="eyebrow">SAVE TO THIS BROWSER</span><h2>Save this run</h2><label for="run-name">Run name</label><input id="run-name" class="input" maxlength="80" required><div class="actions"><button type="submit" class="btn btn-primary">Save run</button><button type="button" class="btn btn-secondary" id="cancel-save">Cancel</button></div></form></dialog>
+</body>
+</html>
