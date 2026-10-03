@@ -10,3 +10,5 @@
 - Phase 7 updates README, versions outputs and verifies tests, data fallback and live examples. v1 results/splits/reports are preserved under `results/archive/` and `reports/archive/v1/`.
 
 There are 215 fitted-model/budget jobs: 200 reused original fits and 15 new full-budget fits (five arms × two locus holdouts plus one strict fold). New fits began only after v2 split and benchmark designs were written. Re-scoring original predictions under the user's revised metric is explicitly retrospective. The old IEDB scripts and results were not changed for v2.
+
+Verification: all 12 tests pass in a fresh Python environment and a clean clone of `805fad9`. All 39 full-budget sequence-baseline fits reproduce exactly across 255,735 predictions using the committed data fallback. All 477 result CSVs and seven processed CSVs are tracked. Both live demo examples return all five arms; no browser visual check was available.

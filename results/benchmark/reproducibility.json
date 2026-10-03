@@ -1,0 +1,22 @@
+{
+  "base_commit": "805fad9",
+  "fresh_environment": true,
+  "raw_organiser_file_available": false,
+  "baseline_fits_rerun": 39,
+  "predictions_compared": 255735,
+  "max_absolute_prediction_difference": 0.0,
+  "regimes": [
+    "peptide",
+    "allele",
+    "locus",
+    "allele_strict"
+  ],
+  "tests_passed": 12,
+  "full_esm2_extraction_repeated_in_clone": false,
+  "gpu_validation": "Validated existing core ESM-2 arrays and re-used original GPU extractions; fresh clone re-fits CPU baselines only.",
+  "dependency_install": "Pinned requirements installed into a new Python 3.11 venv",
+  "result_csvs_committed": 477,
+  "processed_csvs_committed": 7,
+  "report_regenerated": true,
+  "comparison_tables_match_exactly": true
+}
