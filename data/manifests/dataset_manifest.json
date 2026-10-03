@@ -1,0 +1,33 @@
+{
+  "created_utc": "2026-10-03T13:18:48.126960+00:00",
+  "inputs": {
+    "records_for_review_2_csv": {
+      "path": "/Users/berketunc/Downloads/records_for_review 2.csv",
+      "sha256": "a6ef2eb6309d9de3ba8adbe7be9ecf0fa14c66b3ef828937b26d7f6a2883b364",
+      "rows": 10605
+    },
+    "raw_iedb_export": {
+      "path": "/Users/berketunc/Hackology/mhc_ligand_full.csv",
+      "sha256": "a480284fccc7b7af05bf91121ba32718d289fe6394f777525809423a0a050a30",
+      "note": "two-header IEDB export; not re-ingested here"
+    }
+  },
+  "eligibility_rule": {
+    "comment": "exact SPA replicate-count comment",
+    "flags": "empty",
+    "half_life": "> 0 hours",
+    "protocol_id": "SPA_PMID21044632_37C",
+    "temperature_C": 37.0,
+    "temperature_provenance": "protocol-derived (PMID 21044632)"
+  },
+  "counts": {
+    "eligible_rows": 5815,
+    "eligible_peptides": 4268,
+    "eligible_alleles": 10,
+    "excluded_rows": 4790
+  },
+  "outputs": {
+    "eligible_records_csv": "data/processed/eligible_records.csv",
+    "excluded_records_csv": "data/processed/excluded_records.csv"
+  }
+}

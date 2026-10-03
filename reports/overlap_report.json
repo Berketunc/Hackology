@@ -1,0 +1,49 @@
+{
+  "eligible_pairs": 5815,
+  "rasmussen": {
+    "rows": 28166,
+    "unique_pairs": 28166,
+    "eligible_pairs_matched": 5517,
+    "eligible_pairs_unmatched": 298,
+    "label_agreement": {
+      "compared": 5517,
+      "exact_match": 5490,
+      "abs_diff_gt_0_01h": 0,
+      "max_abs_diff_hours": 0.0033333333333338544,
+      "iedb_positive_rasmussen_zero": 0
+    }
+  },
+  "spearmint": {
+    "uq_train": {
+      "rows": 21626,
+      "unique_pairs": 21626,
+      "eligible_pairs_overlapping": 4420
+    },
+    "uq_bs_val": {
+      "rows": 2705,
+      "unique_pairs": 2705,
+      "eligible_pairs_overlapping": 542
+    },
+    "uq_bs_test": {
+      "rows": 2700,
+      "unique_pairs": 2700,
+      "eligible_pairs_overlapping": 555
+    },
+    "uq_s3_train": {
+      "rows": 8465,
+      "unique_pairs": 8399,
+      "eligible_pairs_overlapping": 5305
+    },
+    "uq_s3_val": {
+      "rows": 543,
+      "unique_pairs": 543,
+      "eligible_pairs_overlapping": 392
+    },
+    "uq_s3_test": {
+      "rows": 1133,
+      "unique_pairs": 1130,
+      "eligible_pairs_overlapping": 110
+    }
+  },
+  "eligible_pairs_in_any_spearmint_file": 5807
+}
