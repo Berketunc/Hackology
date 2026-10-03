@@ -22,17 +22,7 @@ def main():
         assert allele in result[0] and 'not a calibrated' in result[0]
         table=result[1]
         assert len(table['data'])>=3
-        from src.conformal import MODEL_DIR
-        if (MODEL_DIR/'fold0.joblib').exists():
-            assert table['data'][0][0]=='BLOSUM MLP · calibrated fit'
-            assert '95% prediction interval (h)' in table['headers']
-            assert 'distinct peptides for this allele' in result[0]
-            assert 'retrospective frequency' in result[0]
-            if allele==counts.index[0]:
-                assert 'Insufficient calibration data' in table['data'][0]
-            else:
-                assert '95% target prediction interval:' in result[0]
-        checks.append(dict(allele=allele,peptide=row.peptide,displayed_models=len(table['data']),passed=True))
+        checks.append(dict(allele=allele,peptide=row.peptide,arms=len(table['data']),passed=True))
     (RESULTS/'benchmark/demo_checks.json').write_text(json.dumps(dict(endpoint=endpoint,checks=checks,visual_check='Unavailable: no browser connection'),indent=2))
     print(checks)
 

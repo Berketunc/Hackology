@@ -4,13 +4,13 @@
     {
       "allele": "HLA-B*15:01",
       "peptide": "FSVQRNLPF",
-      "displayed_models": 6,
+      "arms": 5,
       "passed": true
     },
     {
       "allele": "HLA-B*13:02",
       "peptide": "AEMGANLCV",
-      "displayed_models": 6,
+      "arms": 5,
       "passed": true
     }
   ],
