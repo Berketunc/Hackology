@@ -47,3 +47,10 @@ def load_embedding_arm(arm, df):
     assert X.shape == (len(df), meta['feature_dimension'])
     assert X.shape[1] == (2 * HIDDEN_SIZE if arm == 'esm2_mean' else 9 * HIDDEN_SIZE)
     return X
+
+
+def embedding_arm_available(arm, root=None):
+    """Metadata alone is committed; binaries must also exist to reuse a cache."""
+    root = root or DATA / 'processed'
+    return all((root / f'{arm}{suffix}').exists()
+               for suffix in ['.npy', '_row_ids.npy', '_meta.json'])

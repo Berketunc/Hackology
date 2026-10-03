@@ -65,7 +65,8 @@ def main():
     manifest = json.loads((DATA/'manifests/rasmussen_manifest.json').read_text())
     for arm, mode in [('esm2_mean','mean'),('esm2_complex','complex')]:
         target = DATA/'processed'/f'{arm}.npy'
-        if target.exists() and target.with_name(f'{arm}_meta.json').exists():
+        from src.features import embedding_arm_available
+        if embedding_arm_available(arm):
             from src.features import load_embedding_arm
             load_embedding_arm(arm, df)
             print(f'Validated existing {arm}',flush=True)

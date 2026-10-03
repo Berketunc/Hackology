@@ -58,7 +58,9 @@ def overlap_lookup(peptide,allele):
     if len(match):
         row=match.iloc[0]
         names=[key.removeprefix('in_') for key in frame.columns if key.startswith('in_') and bool(row[key])]
-        return ('Recorded in: '+', '.join(names) if names else 'No pair match in the audited SPEARMINT split files.')+' ESM-2 pretraining sequence exposure is unknown. No SPEARMINT weights are used.'
+        training=[n for n in names if n in ['spearmint_uq_train','spearmint_uq_s3_train']]
+        status=('Yes: '+', '.join(training)) if training else 'No match in the two audited SPEARMINT training files; other training exposure is not ruled out'
+        return 'Published SPEARMINT training-file match: '+status+'. All matching split files: '+(', '.join(names) or 'none')+'. ESM-2 pretraining sequence exposure is unknown. No SPEARMINT weights are used.'
     return 'Pair is absent from this organiser dataset; external model-training exposure is unknown.'
 
 

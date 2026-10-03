@@ -1,0 +1,13 @@
+{
+  "base_commit": "b9ef271",
+  "fresh_environment": true,
+  "raw_organiser_file_available": false,
+  "baseline_fits_rerun": 30,
+  "predictions_compared": 162186,
+  "max_absolute_prediction_difference": 0.0,
+  "full_esm2_extraction_repeated_in_clone": false,
+  "gpu_validation": "Both arms extracted and evaluated in the original workspace; clone checks cover baselines, data fallback and metadata-only cache regression.",
+  "dependency_install": "Pinned requirements installed into a new Python 3.11 venv",
+  "final_patch_note": "Cache availability, explicit per-job seed metadata and demo exposure wording checked after baseline rerun; training implementation unchanged.",
+  "tests_passed": 7
+}

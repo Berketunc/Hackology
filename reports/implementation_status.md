@@ -9,3 +9,5 @@
 - Phase 7: README, committed tables and derivatives, clean-copy checks. Large feature caches and fitted models are regenerated, not committed.
 
 Interpretation corrections: held-out alleles have zero same-allele training measurements, so stratification uses nearest-training-allele support as a separately named variable. Sequence identity is not an independent measure of generalization difficulty. Synthetic concatenation is not a structural model. P4's between-model comparison cannot be tested without optional Arm D. The old active-learning loss is established; feature geometry as its cause remains a hypothesis.
+
+Verification: seven tests pass. A new clone/environment reran 30 baseline fits using only committed data and reproduced 162,186 predictions with maximum absolute difference 0.0. Both five-arm demo examples pass live API calls. The fresh-clone metadata-only cache bug was repaired. GPU extraction was verified once in the original workspace, not repeated in the clean clone.

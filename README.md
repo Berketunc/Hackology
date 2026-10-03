@@ -70,6 +70,10 @@ See [the result table](reports/benchmark_table.md), [findings and limitations](r
 ![Learning curves](reports/learning_curve.png)
 ![GPU extraction cost](reports/compute_performance.png)
 
+## Validation
+
+Seven tests cover dataset counts, locked group partitions, unseen-allele encoding, metric boundaries, training-only preprocessing, the audit regression and incomplete embedding caches. A fresh clone with a new environment reran all 30 full-budget baseline fits using the committed data derivative; all 162,186 baseline predictions matched exactly. ESM-2 GPU extraction was verified in the original workspace and was not repeated in the clean clone. Both live demo examples passed with five arms. No browser connection was available for visual UI inspection. Details: `results/benchmark/reproducibility.json` and `demo_checks.json`.
+
 ## Demo
 
 `python app.py` serves <http://127.0.0.1:7860>. It compares arm predictions, the stability tier, spread across five fitted models, allele measurement counts, the nearest better-measured allele, and audited SPEARMINT split overlap. Two examples cover a well-measured and an under-measured allele. Known pairs use the prediction from the fold that excluded their peptide. Their spread across all folds can include models trained on that pair and is explicitly a sensitivity diagnostic, not calibrated uncertainty. Novel peptides load ESM-2 locally on first use, requiring internet/model download and enough memory; known pairs use the saved feature cache.

@@ -1,5 +1,5 @@
 {
-  "endpoint": "/predict_1",
+  "endpoint": "/compare_1",
   "checks": [
     {
       "allele": "HLA-B*15:01",

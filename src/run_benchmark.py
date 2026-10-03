@@ -9,7 +9,7 @@ import pandas as pd
 from threadpoolctl import threadpool_limits
 from .config import ROOT, RESULTS, DATA, CHECKPOINT
 from .splits import prepare
-from .features import blosum_pairs, blosum_encode, onehot_allele, load_embedding_arm
+from .features import blosum_pairs, blosum_encode, onehot_allele, load_embedding_arm, embedding_arm_available
 from .models import fit_ridge, fit_baseline_nn
 from .evaluate import metrics
 
@@ -40,7 +40,7 @@ def lock_design():
 def run(arms, fractions=(1.0,), regimes=('peptide','allele')):
     df = prepare()
     lock_design()
-    missing = [arm for arm in arms if arm.startswith('esm2_') and not (DATA / 'processed' / f'{arm}_meta.json').exists()]
+    missing = [arm for arm in arms if arm.startswith('esm2_') and not embedding_arm_available(arm)]
     if missing:
         from scripts.modal_benchmark_embed import main as extract_embeddings
         extract_embeddings()
@@ -86,7 +86,9 @@ def run(arms, fractions=(1.0,), regimes=('peptide','allele')):
                     path.parent.mkdir(parents=True, exist_ok=True)
                     rows.to_csv(path, index=False)
                     stats = dict(arm=arm, split_regime=regime, fold=fold, fraction=fraction,
-                                 n_train=len(train), fit_predict_cpu_wall_seconds=seconds,
+                                 n_train=len(train), seed=fold,
+                                 training_row_ids_sha256=hashlib.sha256(df.index.to_numpy()[train].astype('<i8').tobytes()).hexdigest(),
+                                 fit_predict_cpu_wall_seconds=seconds,
                                  alpha=float(model.named_steps['ridge'].alpha_) if arm != 'blosum_nn' else None,
                                  best_epoch=getattr(model, 'best_epoch_', None))
                     (path.with_suffix('.json')).write_text(json.dumps(stats, indent=2))

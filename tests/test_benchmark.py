@@ -85,3 +85,14 @@ def test_corrected_audit_regression(tmp_path, monkeypatch):
     frame.loc[idx,'comments'] += ' Half-life at least 8 hours.'
     result=audit.audit(SimpleNamespace(out=str(tmp_path/'bounds'),input='retained-original-fields'))
     assert result['comments_flagged']==7
+
+
+
+def test_clone_metadata_does_not_imply_embedding_cache(tmp_path):
+    from src.features import embedding_arm_available
+    (tmp_path/'esm2_mean_meta.json').write_text('{}')
+    assert not embedding_arm_available('esm2_mean',tmp_path)
+    np.save(tmp_path/'esm2_mean.npy',np.zeros((2,2560)))
+    assert not embedding_arm_available('esm2_mean',tmp_path)
+    np.save(tmp_path/'esm2_mean_row_ids.npy',np.array([0,1]))
+    assert embedding_arm_available('esm2_mean',tmp_path)
