@@ -1,0 +1,12 @@
+{
+  "arm": "onehot_ridge",
+  "split_regime": "allele",
+  "fold": 1,
+  "fraction": 0.1,
+  "n_train": 2051,
+  "fit_predict_cpu_wall_seconds": 1.2630868749984074,
+  "alpha": 100.0,
+  "best_epoch": null,
+  "seed": 1,
+  "training_row_ids_sha256": "0a9d273fb5b6e221c55296244f6744f981d19ef80fef397b6c2c10f211e45f11"
+}

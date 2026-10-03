@@ -128,5 +128,9 @@
       "sequences": 407
     }
   ],
-  "cost_scope": "GPU function wall time incl model load; excludes container startup and image build; not a billing total"
+  "cost_scope": "GPU function wall time incl model load; excludes container startup and image build; not a billing total",
+  "extracted_sequences": 27031,
+  "inference_sequences_per_second": 337.516043006193,
+  "gpu_function_sequences_per_second": 322.2409465181472,
+  "representation_name": "joint peptide\u2013HLA sequence encoding"
 }

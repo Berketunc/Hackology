@@ -1,0 +1,14 @@
+{
+  "total_prediction_rows": 426225,
+  "primary_v1_predictions_exactly_preserved": 270310,
+  "unique_prediction_keys": true,
+  "finite_predictions": true,
+  "model_budget_jobs": 215,
+  "metric_rows": 1935,
+  "metrics_per_job": 9,
+  "original_split_hashes": {
+    "peptide_folds.csv": "b4b8d4ef6bb65ff216c464a59be430eae13bf02b4a55ca7a9c64821245ff45b1",
+    "allele_folds.csv": "56292c79a5195c1de2d366aa15e56bfd7c5add2928d1fc1e3e342ef202395f74"
+  },
+  "unit_tests_passed": 12
+}

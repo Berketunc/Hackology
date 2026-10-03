@@ -8,5 +8,7 @@
   "alpha": 10.0,
   "best_epoch": null,
   "seed": 4,
-  "training_row_ids_sha256": "635d9017faa7eec09ef9dd529e139b66dde8f9bb02c0f7da01ef0dcea68574ef"
+  "training_row_ids_sha256": "635d9017faa7eec09ef9dd529e139b66dde8f9bb02c0f7da01ef0dcea68574ef",
+  "provenance": "v1 fit reused; v2 metrics recomputed, no model selection on test labels",
+  "original_job": "results/archive/benchmark_v1/jobs/blosum_ridge_allele_4_0.5.json"
 }

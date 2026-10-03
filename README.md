@@ -1,13 +1,65 @@
 # When does protein pretraining help peptide–HLA stability prediction?
 
-This repository tests whether general pretrained protein representations improve peptide–HLA stability prediction over a supervised model trained on the same sequences, and records the compute needed. The organiser's Rasmussen dataset is the headline study. The earlier IEDB active-learning experiment remains under `scripts/`, `results/policy_comparison/`, and `reports/al_comparison.md`.
+The research question is whether general protein-model representations improve stability prediction over a **sequence-aware supervised model**, under what distribution shift or label scarcity, and at what compute cost. The headline endpoint is **macro-averaged within-allele Spearman**, not pooled correlation. The BLOSUM-pseudosequence neural network is the reference; allele-ID Ridge is an illustrative floor.
 
-H1: pretraining supplies prior structure, so its advantage should increase with the generalization distance demanded by evaluation. This is a hypothesis, not a guarantee or an information-theoretic result.
+H1: both models receive the same peptide and HLA sequence information. With pretrained weights fixed, a deterministic encoding cannot create label information beyond its inputs; pretraining on large-scale protein sequence corpora supplies an inductive bias that may improve finite-sample learning. Greater benefit under distance or scarcity is a hypothesis, not a theorem implied by that observation.
 
-- P1: little or no advantage on data-rich held-out peptides.
-- P2: an advantage on held-out HLA alleles.
-- P3: the advantage shrinks monotonically as training data increases.
-- P4: extraction method matters more than model choice. Only the extraction comparison is tested here; no second pLM is run.
+- P1: little or no pLM advantage on data-rich held-out peptides.
+- P2: an advantage over the BLOSUM-pseudosequence reference on held-out alleles, growing with distance to training alleles.
+- P3: the advantage shrinks as the training-label budget grows.
+- P4: extraction matters more than model choice. The extraction contrast is tested; a second pLM remains optional and unrun.
+
+## Results
+
+The MLP leads on ordinary peptide and allele holdouts. Joint ESM-2 encoding improves on independent mean pooling under the primary within-allele metric. Locus transfer is difficult for every arm; joint encoding has an exploratory advantage on HLA-A holdout, while the overall two-locus interval is too wide for a general claim. See [findings](reports/benchmark_findings.md) for paired CIs, eligibility exclusions, tier AUC, noise limitations and interpretation.
+
+### peptide
+
+| Arm | Macro ρ ± fold SD | Δ vs MLP [95% CI] | Pooled ρ | Pooled − macro |
+|---|---:|---:|---:|---:|
+| BLOSUM MLP (reference) | 0.612 ± 0.013 | reference | 0.753 | +0.141 |
+| BLOSUM Ridge | 0.258 ± 0.022 | -0.354 [-0.385, -0.323] | 0.556 | +0.299 |
+| Allele-ID Ridge (floor) | 0.258 ± 0.022 | -0.354 [-0.384, -0.323] | 0.559 | +0.301 |
+| ESM-2 mean | 0.168 ± 0.021 | -0.443 [-0.471, -0.416] | 0.523 | +0.354 |
+| ESM-2 joint | 0.215 ± 0.029 | -0.396 [-0.424, -0.369] | 0.406 | +0.190 |
+
+### allele
+
+| Arm | Macro ρ ± fold SD | Δ vs MLP [95% CI] | Pooled ρ | Pooled − macro |
+|---|---:|---:|---:|---:|
+| BLOSUM MLP (reference) | 0.392 ± 0.126 | reference | 0.473 | +0.080 |
+| BLOSUM Ridge | 0.228 ± 0.073 | -0.164 [-0.240, -0.089] | 0.246 | +0.018 |
+| Allele-ID Ridge (floor) | 0.228 ± 0.073 | -0.164 [-0.240, -0.089] | 0.210 | -0.018 |
+| ESM-2 mean | 0.160 ± 0.067 | -0.233 [-0.322, -0.143] | 0.292 | +0.132 |
+| ESM-2 joint | 0.190 ± 0.081 | -0.202 [-0.274, -0.131] | 0.268 | +0.078 |
+
+### locus
+
+| Arm | Macro ρ ± fold SD | Δ vs MLP [95% CI] | Pooled ρ | Pooled − macro |
+|---|---:|---:|---:|---:|
+| BLOSUM MLP (reference) | 0.062 ± 0.012 | reference | 0.126 | +0.063 |
+| BLOSUM Ridge | 0.071 ± 0.039 | +0.009 [-0.443, +0.461] | 0.101 | +0.030 |
+| Allele-ID Ridge (floor) | 0.071 ± 0.038 | +0.009 [-0.438, +0.456] | 0.088 | +0.017 |
+| ESM-2 mean | 0.071 ± 0.003 | +0.008 [-0.122, +0.139] | 0.142 | +0.072 |
+| ESM-2 joint | 0.112 ± 0.019 | +0.050 [-0.226, +0.325] | 0.013 | -0.099 |
+
+### allele_strict
+
+| Arm | Macro ρ ± fold SD | Δ vs MLP [95% CI] | Pooled ρ | Pooled − macro |
+|---|---:|---:|---:|---:|
+| BLOSUM MLP (reference) | 0.147 | reference | 0.215 | +0.069 |
+| BLOSUM Ridge | 0.080 | -0.066 [-0.191, +0.066] | 0.124 | +0.044 |
+| Allele-ID Ridge (floor) | 0.083 | -0.064 [-0.188, +0.068] | 0.081 | -0.002 |
+| ESM-2 mean | -0.024 | -0.170 [-0.273, -0.061] | -0.010 | +0.014 |
+| ESM-2 joint | 0.009 | -0.138 [-0.256, -0.005] | 0.056 | +0.048 |
+
+Peptide/allele: paired t intervals over five folds. Locus summary: two-fold t interval, highly unstable; see per-locus paired-allele intervals. Strict: paired-allele bootstrap conditional on fold 0. Intervals do not account for shared training data or method selection.
+
+The primary figure remains the distance-stratified result, including the locus stress tests, regardless of whether an overall difference excludes zero:
+
+![Macro ranking, paired differences and locus stress tests](reports/allele_distance.png)
+![Budget differences with paired confidence intervals](reports/learning_gap.png)
+![Macro ranking versus extraction GPU time](reports/compute_performance.png)
 
 ## Reproduce
 
@@ -22,68 +74,64 @@ python -m src.report
 python app.py
 ```
 
-The default benchmark automatically extracts missing ESM-2 representations on Modal, requiring network access, an authenticated Modal account and GPU billing. Set up a new machine with `modal setup` first. Extraction uses an L4 and general checkpoint `facebook/esm2_t33_650M_UR50D`; no stability-trained checkpoint is loaded. Public model downloads need no Hugging Face secret. Cached extraction is reused only after provenance and shape checks.
+The default benchmark evaluates all five core arms across peptide, allele, locus and strict allele-fold-0 regimes at full budget. Saved fits resume. On a fresh clone, missing fitted models are rebuilt. Missing embedding binaries trigger Modal extraction; this requires network access, an authenticated Modal account (`modal setup`) and GPU billing. No Hugging Face secret is required for this public checkpoint. Large binary features/models are not committed; processed tables, result CSVs and provenance are.
 
-The data layer verifies `data/external/rasmussen_et_al_dataset.csv` when available; otherwise it reads the committed, checksummed `data/processed/rasmussen_all.csv`. The 8.8 GB IEDB raw export and SPEARMINT source files are unnecessary for the new benchmark. All results CSVs and processed tabular derivatives are versioned. Large `.npy` feature caches and local fitted models are excluded.
-
-Run the baselines without Modal:
+Without Modal, run the sequence baselines only:
 
 ```sh
 python -m src.run_benchmark --arms blosum_nn blosum_ridge onehot_ridge
 ```
 
-Run learning curves and checks:
+Full label-budget curves and checks:
 
 ```sh
 python -m src.run_benchmark --fractions .1 .25 .5 1
 python -m src.report
 python -m pytest -q
-python -m scripts.check_demo   # while app.py serves localhost:7860
+python -m scripts.check_demo  # while app.py serves localhost:7860
 ```
 
-Saved jobs resume automatically. Delete or move `results/benchmark/jobs/` and `results/models/` in a disposable checkout to refit completed experiments. After a fresh clone, model files are absent, so full-budget jobs are refit automatically for the demo. Preserve the locked design and split files. To run a different design, use a separate experiment directory/check-out rather than mixing old and new jobs.
+Only peptide/allele regimes use the four budget fractions; the locus and strict checks use their full retained training sets. To force refits, move saved jobs/models aside in a disposable checkout. Do not mix results from different designs. `design.json` files reject incompatible changes.
 
-## Design
+The data layer reads the original organiser file when present, or the committed checksummed `data/processed/rasmussen_all.csv` otherwise. The huge IEDB raw export and external SPEARMINT CSVs are not needed to run the new benchmark or the saved demo exposure audit. Archived v1 results are in `results/archive/benchmark_v1/`; active results are v2. The original 200 model/fold/budget jobs were re-scored without changing their fits; 15 locus/strict jobs were newly fit after locking the v2 design. This is partly a retrospective metric reanalysis, not a new independent confirmation.
 
-28,166 original pairs; 1,135 engineered C67S rows excluded; 27,031 main-analysis pairs across 72 allele labels. All peptides are 9-mers. All 4,711 main-analysis zeros remain. Targets are `log1p(hours)`. Five peptide-group folds and five allele-group folds are persisted before fitting, with seed 0. Every allele is held out once in the allele regime. All learned preprocessing sees outer training rows only.
+## Design and metric rules
 
-The challenge baseline is a 256/64 ReLU MLP trained on BLOSUM62-encoded peptide and 34-contact-residue HLA pseudosequence. Early stopping uses training-only grouped validation. The matched representation comparisons use one fixed head: StandardScaler → randomized PCA (up to 256 components) → RidgeCV. PCA, scaling, and alpha selection are fitted within outer training folds. Ridge alpha selection uses training-only LOO; its internal transforms are not refitted per LOO sample. The outer test folds remain untouched by preprocessing.
+The organiser data contain 28,166 pairs, 75 allele labels and 5,679 zeros. Excluding 1,135 engineered C67S rows leaves 27,031 pairs, 72 alleles and 4,711 zeros. All peptides have nine residues; primary HLA inputs are 34 contact residues. Per-allele zero counts/fractions are recorded. Only HLA-A and HLA-B occur: the locus stress tests train B/test A and train A/test B.
 
-Arm A concatenates separately mean-pooled peptide and HLA embeddings. Arm B concatenates the nine peptide-position hidden states from `peptide + GGGG + pseudosequence`. Both use frozen ESM-2. This synthetic sequence permits attention across inputs but is not a validated peptide–HLA structural complex. The BLOSUM and allele-ID Ridge arms use the same PCA/head rule. The MLP is an additional nonlinear baseline, not the matched-head representation comparator.
+Five peptide-group folds provide the control. Five allele-group folds are the main test; peptide sharing across alleles is permitted. Strict allele fold 0 removes all training peptides that occur in its test set: 22,879 → 7,794 training rows, unchanged 4,152 test rows. That change combines removal of shared peptides with a lower label budget. Every held-out allele has zero same-allele training measurements; nearest-training-allele support is a separately labelled quantity. Counts describe this dataset, not human population representation.
 
-Primary metric: Spearman. Mean within-allele Spearman is also reported because the use case ranks peptides for an allele. Other metrics: log-scale RMSE, Pearson, and AUC at 2 h and 6 h. Fold SD describes variation across these five folds, not an independent confidence interval. Learning curves use nested seeded row subsets within each outer training fold.
+Within each evaluation fold, an allele enters macro Spearman only with **≥20 test rows and ≥10 distinct positive half-lives**. Eligible alleles receive equal weight; zero labels remain in their correlations. Counts and exclusions appear in `allele_metric_audit.csv` and `excluded_alleles.csv`. A constant prediction for an eligible allele makes the macro undefined instead of silently dropping that allele. The main table averages per-fold macros; stratified analyses average eligible allele scores within the named stratum.
 
-## Results
+Pooled Spearman, pooled-minus-macro, log1p RMSE, Pearson and tier AUC at 2/6 h are diagnostics. The pooled-minus-macro gap is not a causal decomposition of between-allele offsets. For alleles with ≥50% recorded zeros, lead with tier AUC; the findings name them. Boundary thresholds are compared on the log scale to avoid floating-point round-trip misclassification.
 
-| Arm | Held-out peptide ρ | Held-out allele ρ |
-|---|---:|---:|
-| BLOSUM MLP | 0.753 ± 0.007 | 0.473 ± 0.151 |
-| BLOSUM Ridge | 0.556 ± 0.010 | 0.246 ± 0.145 |
-| ESM-2 residue | 0.406 ± 0.024 | 0.268 ± 0.109 |
-| ESM-2 mean | 0.523 ± 0.008 | 0.292 ± 0.142 |
-| Allele-ID Ridge | 0.559 ± 0.010 | 0.210 ± 0.100 |
+Headline model differences use paired 95% t intervals across five folds. Per-locus, strict-fold and distance/support intervals bootstrap paired allele scores within the fixed split (seed 0, 10,000 resamples). These intervals are nominal and exploratory: shared training rows, related alleles, multiple comparisons and method selection are not fully represented. The two-locus t interval is especially imprecise.
 
-See [the result table](reports/benchmark_table.md), [findings and limitations](reports/benchmark_findings.md), and [implementation scope](reports/implementation_status.md). Raw predictions and metrics are in `results/benchmark/per_row.csv` and `per_fold.csv`.
+## Models and representations
 
-![Held-out allele stratification](reports/allele_distance.png)
-![Joint distance and support gaps](reports/allele_joint_gap.png)
-![Learning curves](reports/learning_curve.png)
-![GPU extraction cost](reports/compute_performance.png)
+The sequence-aware reference is a 256/64 ReLU MLP using BLOSUM62 peptide/pseudosequence inputs, with grouped validation carved from outer training data for early stopping. Peptide groups are used for peptide-split validation; allele groups otherwise.
 
-## Validation
+The common Ridge procedure is StandardScaler → randomized PCA (up to 256) → RidgeCV. **Alpha is selected separately for each arm/fold/budget** over 0.01–100,000 using training-only LOO. Architecture and selection procedure are shared, not the selected alpha. All preprocessing excludes outer test rows; transforms are not re-fit inside each internal LOO step. The MLP is a separate nonlinear reference. Split seed is 0; model, PCA, inner-validation and nested-subset seeds equal the outer fold number.
 
-Seven tests cover dataset counts, locked group partitions, unseen-allele encoding, metric boundaries, training-only preprocessing, the audit regression and incomplete embedding caches. A fresh clone with a new environment reran all 30 full-budget baseline fits using the committed data derivative; all 162,186 baseline predictions matched exactly. ESM-2 GPU extraction was verified in the original workspace and was not repeated in the clean clone. Both live demo examples passed with five arms. No browser connection was available for visual UI inspection. Details: `results/benchmark/reproducibility.json` and `demo_checks.json`.
+- ESM-2 independent mean: concatenate separately mean-pooled peptide and pseudosequence hidden states.
+- ESM-2 joint sequence encoding: concatenate nine peptide-position hidden states from `peptide + GGGG + pseudosequence`.
+
+Both use frozen `facebook/esm2_t33_650M_UR50D` (1,280 hidden dimensions). Joint encoding is a synthetic sequence input, not an assertion of physical interactions. Cache checkpoint, dimension, row identity and dataset checksum are verified. No SPEARMINT/MINT embeddings or NetMHCstabpan predictions are used. Optional zero-shot, second-model and groove-domain arms have not been run.
+
+Raw full-budget predictions are in `per_row.csv`. `per_fold.csv` contains scores for **all budgets**, identified by `fraction`; filter `fraction == 1` for the full-budget table. Per-fit raw predictions and chosen hyperparameters remain in `jobs/`. Compute metadata include GPU wall time, memory, throughput and CPU fit time; the plot's GPU axis is not total financial cost. v2 reused existing embeddings and required no additional GPU extraction.
 
 ## Demo
 
-`python app.py` serves <http://127.0.0.1:7860>. It compares arm predictions, the stability tier, spread across five fitted models, allele measurement counts, the nearest better-measured allele, and audited SPEARMINT split overlap. Two examples cover a well-measured and an under-measured allele. Known pairs use the prediction from the fold that excluded their peptide. Their spread across all folds can include models trained on that pair and is explicitly a sensitivity diagnostic, not calibrated uncertainty. Novel peptides load ESM-2 locally on first use, requiring internet/model download and enough memory; known pairs use the saved feature cache.
+`python app.py` serves <http://127.0.0.1:7860>. Two examples cover a well-measured and a sparsely measured allele **in this dataset**. Cards show each arm, the half-life/tier, available training-fold counts, nearest better-measured neighbour, reported zero fraction and published SPEARMINT split membership. Training files are distinguished from validation/test files.
 
-## Limitations
+Known pairs display their excluded-peptide-fold prediction. The range across all five CV fits is explicitly a sensitivity diagnostic, not calibrated uncertainty; four fits may contain the measured pair. Novel peptides load ESM-2 locally on first use and can take several minutes. Negative log-scale predictions are clipped to zero only for display.
 
-Zeros may be left-censored but are modelled as exact recorded zeros. C67S constructs are excluded. Only 9-mer, class-I pairs are covered. Exact peptide grouping does not eliminate near-sequence similarity; the allele split permits shared peptides across different alleles. Small alleles give noisy correlations and some constant-label groups yield undefined correlations, which are excluded from macro averages. These are retrospective comparisons with no laboratory or clinical claim.
+## Limitations and validation
 
-Only one common Ridge-head/PCA specification is used for representation comparisons; the separate MLP can learn interactions that additive Ridge inputs cannot. A 34-residue contact pseudosequence and a synthetic linker may be out of distribution for ESM-2. No groove-domain, second-pLM, zero-shot, or structure arm has been run. ESM-2 pretraining sequence overlap is unknown; supervised stability-data overlap is avoided by using a general checkpoint. The same five evaluation folds support the report, so later architecture selection would need new evaluation. The original IEDB final-test partition has not been evaluated.
+Zeros may be left-censored but are treated as exact. C67S constructs are excluded. Only 9-mers/class I, one common Ridge/PCA specification and one pLM are covered. Main allele evaluation permits cross-allele peptide sharing; near-sequence similarity is not clustered. The 34-contact-residue pseudosequence and synthetic linker can be out of distribution. Per the source description, labels average at least two experiments, but per-replicate variance is unavailable: the measurement-noise ceiling is unestimated. No numerical ceiling, population representation, laboratory savings or clinical benefit is claimed.
 
-The frozen historical study found random acquisition better than both pure-diversity policies. Geometry measurements motivate a possible explanation but do not establish a causal mechanism. Legacy vectorizers now fit acquisition-pool inputs only; historical CSVs retain their original run provenance.
+Tests cover grouping, strict/locus boundaries, zero handling, eligible/absent allele auditing, equal macro weighting, pooled versus macro behaviour, paired-CI alignment, training-only preprocessing, cache validation and the corrected IEDB audit. Live examples and clean-clone checks are recorded under `results/benchmark/`. Browser visual inspection was unavailable; static scientific figures were inspected directly.
 
-Implementation references: [scikit-learn GroupKFold](https://scikit-learn.org/stable/modules/generated/sklearn.model_selection.GroupKFold.html), [Modal GPU functions](https://modal.com/docs/guide/gpu). Dataset provenance and checksums are in `data/manifests/rasmussen_manifest.json`.
+The old IEDB active-learning study remains under `scripts/` and its original result directories; the final test remains untouched. It showed pure diversity acquisition losing to random. Feature geometry is a possible explanation, not a demonstrated cause. Uncertainty acquisition was never tested, so this is not evidence that active learning generally fails.
+
+Method references: [RidgeCV](https://scikit-learn.org/stable/modules/generated/sklearn.linear_model.RidgeCV.html), [paired t intervals](https://docs.scipy.org/doc/scipy/reference/generated/scipy.stats.ttest_rel.html). See [implementation status](reports/implementation_status.md) for scope.

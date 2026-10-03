@@ -1,0 +1,1 @@
+These are unchanged v1 report artifacts from commit ae0cdd9, saved before the fix2.md reanalysis. Relative links in the saved README refer to the original repository layout. Active v2 reports are two directories above this folder. The historical metric and extraction names are preserved as provenance, not current recommendations.

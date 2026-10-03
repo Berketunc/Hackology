@@ -8,5 +8,7 @@
   "alpha": 100.0,
   "best_epoch": null,
   "seed": 2,
-  "training_row_ids_sha256": "d100d9fd04622ea27fe7bd240b379338ee5e8e47aec2fb63d4978518de9a6a36"
+  "training_row_ids_sha256": "d100d9fd04622ea27fe7bd240b379338ee5e8e47aec2fb63d4978518de9a6a36",
+  "provenance": "v1 fit reused; v2 metrics recomputed, no model selection on test labels",
+  "original_job": "results/archive/benchmark_v1/jobs/onehot_ridge_allele_2_0.1.json"
 }

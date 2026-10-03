@@ -8,5 +8,7 @@
   "alpha": 1.0,
   "best_epoch": null,
   "seed": 0,
-  "training_row_ids_sha256": "bac79385f5c35a2d8b1784056784331053f04204b0b472091713837270c017c4"
+  "training_row_ids_sha256": "bac79385f5c35a2d8b1784056784331053f04204b0b472091713837270c017c4",
+  "provenance": "v1 fit reused; v2 metrics recomputed, no model selection on test labels",
+  "original_job": "results/archive/benchmark_v1/jobs/blosum_ridge_peptide_0_1.json"
 }

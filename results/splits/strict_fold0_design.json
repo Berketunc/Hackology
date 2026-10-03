@@ -1,0 +1,12 @@
+{
+  "fold": 0,
+  "test_rows": 4152,
+  "permissive_train_rows": 22879,
+  "strict_train_rows": 7794,
+  "removed_train_rows": 15085,
+  "encoding": {
+    "0": "test",
+    "1": "train",
+    "-1": "excluded shared-peptide training row"
+  }
+}

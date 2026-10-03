@@ -1,0 +1,14 @@
+{
+  "arm": "esm2_joint",
+  "split_regime": "peptide",
+  "fold": 3,
+  "fraction": 0.1,
+  "n_train": 2152,
+  "fit_predict_cpu_wall_seconds": 2.9415911250107456,
+  "alpha": 10000.0,
+  "best_epoch": null,
+  "seed": 3,
+  "training_row_ids_sha256": "296e4dc3fdd15a3fe48fb1c5813e43f9c9adea024d323545e1ffc554eb939929",
+  "provenance": "v1 fit reused; v2 metrics recomputed, no model selection on test labels",
+  "original_job": "results/archive/benchmark_v1/jobs/esm2_complex_peptide_3_0.1.json"
+}

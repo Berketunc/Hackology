@@ -8,5 +8,7 @@
   "alpha": 1000.0,
   "best_epoch": null,
   "seed": 0,
-  "training_row_ids_sha256": "45838ce2055770bca77e841f029aa6402abb4c1626f5b49785219cd41ff6651f"
+  "training_row_ids_sha256": "45838ce2055770bca77e841f029aa6402abb4c1626f5b49785219cd41ff6651f",
+  "provenance": "v1 fit reused; v2 metrics recomputed, no model selection on test labels",
+  "original_job": "results/archive/benchmark_v1/jobs/esm2_mean_allele_0_0.5.json"
 }

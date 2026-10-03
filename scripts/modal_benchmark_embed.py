@@ -39,7 +39,7 @@ def extract(sequences, mode):
             batch = sequences[pos:pos+64]
             tokens = _TOKENIZER(batch, padding=True, return_tensors='pt').to('cuda')
             hidden = _MODEL(**tokens).last_hidden_state
-            if mode == 'complex':
+            if mode == 'joint':
                 value = hidden[:, 1:10].reshape(len(batch), -1)
             else:
                 mask = tokens.attention_mask.clone()
@@ -63,7 +63,7 @@ def main():
     df = prepare()
     lock_design()
     manifest = json.loads((DATA/'manifests/rasmussen_manifest.json').read_text())
-    for arm, mode in [('esm2_mean','mean'),('esm2_complex','complex')]:
+    for arm, mode in [('esm2_mean','mean'),('esm2_joint','joint')]:
         target = DATA/'processed'/f'{arm}.npy'
         from src.features import embedding_arm_available
         if embedding_arm_available(arm):
@@ -97,12 +97,16 @@ def main():
         meta = dict(checkpoint=CHECKPOINT, hidden_size=HIDDEN_SIZE, feature_dimension=arr.shape[1],
                     rows=len(arr), frozen=True, dtype='float16 inference; float32 output',
                     pooling='residue mean' if mode=='mean' else 'concatenated 9 peptide hidden states',
-                    hla_input='34-residue pseudosequence', linker='GGGG' if mode=='complex' else None,
+                    hla_input='34-residue pseudosequence', linker='GGGG' if mode=='joint' else None,
                     dataset_sha256=manifest['sha256'], gpu_seconds=sum(s['gpu_seconds'] for s in stats),
                     inference_seconds=sum(s['inference_seconds'] for s in stats),
                     peak_gpu_memory_bytes=max(s['peak_gpu_memory_bytes'] for s in stats),
                     local_wall_seconds=time.perf_counter()-start, hardware=stats[0]['device'], batches=stats,
                     cost_scope='GPU function wall time incl model load; excludes container startup and image build; not a billing total')
+        meta['representation_name']='independent mean pooling' if mode=='mean' else 'joint peptide–HLA sequence encoding'
+        meta['extracted_sequences']=len(seqs)
+        meta['inference_sequences_per_second']=len(seqs)/meta['inference_seconds']
+        meta['gpu_function_sequences_per_second']=len(seqs)/meta['gpu_seconds']
         target.with_name(f'{arm}_meta.json').write_text(json.dumps(meta,indent=2)+'\n')
         print(f'Saved {arm}: {arr.shape}',flush=True)
 

@@ -38,6 +38,8 @@ def load_rasmussen(path=None):
     assert not df.duplicated(['allele', 'peptide']).any()
     assert df.groupby('allele')[['hla_seq', 'hla_pseudoseq']].nunique().eq(1).all().all()
     df.index.name = 'row_index'
+    df['locus'] = df.allele.str.extract(r'^HLA-([ABC])\*', expand=False)
+    assert df.locus.notna().all()
     df['y'] = np.log1p(df.thalf_hours)
     df['is_engineered'] = df.allele.str.contains('(', regex=False)
     df['tier'] = pd.cut(df.thalf_hours, [-np.inf, 2, 6, np.inf], right=False,
@@ -51,6 +53,10 @@ def load_rasmussen(path=None):
                     main_zeros=int((df.thalf_hours.eq(0) & ~df.is_engineered).sum()),
                     zero_policy='Retained as exact recorded zero; possible left censoring.',
                     source_url='https://docs.google.com/spreadsheets/d/1NtZNvcF3u0KFn-1bbuA50CF3IXvs1l4HfbaR3KRLvso/edit')
+    manifest['locus_counts'] = {k: int(v) for k,v in df.locus.value_counts().items()}
+    manifest['zero_counts_per_allele'] = {a:int(g.thalf_hours.eq(0).sum()) for a,g in df.groupby('allele')}
+    manifest['main_zero_counts_per_allele'] = {a:int(g.thalf_hours.eq(0).sum()) for a,g in df.loc[~df.is_engineered].groupby('allele')}
+    manifest['scope'] = 'Measurement representation in this dataset; not human population frequencies.'
     (DATA / 'manifests').mkdir(parents=True, exist_ok=True)
     derivative = DATA / 'processed/rasmussen_all.csv'
     derivative.parent.mkdir(parents=True, exist_ok=True)

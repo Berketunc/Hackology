@@ -1,0 +1,18 @@
+{
+  "endpoint": "/compare_1",
+  "checks": [
+    {
+      "allele": "HLA-B*15:01",
+      "peptide": "FSVQRNLPF",
+      "arms": 5,
+      "passed": true
+    },
+    {
+      "allele": "HLA-B*13:02",
+      "peptide": "AEMGANLCV",
+      "arms": 5,
+      "passed": true
+    }
+  ],
+  "visual_check": "Unavailable: no browser connection"
+}

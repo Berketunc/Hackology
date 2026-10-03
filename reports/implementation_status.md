@@ -1,13 +1,12 @@
-# Implementation against fix.md
+# Implementation against fix2.md
 
-- Phase 0: portable configuration, explicit dependency versions, visible results/processed CSVs, removed duplicate extractor and tracked junk. Historical script changes are limited to path portability, cache validation, and the documented vectorizer leakage correction. Existing results are preserved, not silently regenerated.
-- Phases 1–2: validated organiser dataset, retained zeros, excluded engineered alleles, checksummed derivatives, locked peptide/allele folds, allele-distance table, BLOSUM MLP and matched Ridge baselines, ranking and tier metrics.
-- Phase 3 core: Arms A and B, identical Ridge pipeline, cached general ESM-2 features with checkpoint/dimension/row identity checks, Modal timing and peak memory. Optional C/D/E are not included in this minimum submission.
-- Phase 4: five-fold scores, per-allele/identity/support stratification, 10/25/50/100% learning curves, compute and findings report.
-- Phase 5: local Gradio demo, model comparison, measured-count context, better-measured neighbour, overlap flags, two examples. Known pairs show predictions from the fold that excluded their peptide. The five-fit range is explicitly not a calibrated interval; other fits can include the pair.
-- Phase 6.3: corrected audit merged after the live demo worked; regression verifies 6,101 unflagged / 5,815 candidates / 6 comments. No structure prediction or supervised-checkpoint contamination experiment.
-- Phase 7: README, committed tables and derivatives, clean-copy checks. Large feature caches and fitted models are regenerated, not committed.
+- Phase 0 was already complete: tracked processed/results CSVs, portable paths, pinned dependencies, removed tracked junk and conflicting extractor.
+- Phase 1 adds locus, per-allele zeros, locked A/B locus holdouts, distance/zero/count tables, and strict allele fold 0. No HLA-C rows exist. Existing peptide and allele assignments are byte-identical to v1.
+- Phase 2 changes the primary endpoint to macro within-allele Spearman with ≥20 test rows and ≥10 distinct positive labels. Counts and reasons are exported, including absent test alleles. Pooled correlation and pooled-minus-macro are diagnostics. Fold-paired t CIs and paired-allele bootstrap CIs are implemented. Ridge was already tuned per arm; its selection records are now explicit in the report.
+- Phase 3 retains the two core frozen ESM-2 arms and renames Arm B to joint sequence encoding throughout active code, results and UI. No inference that attention represents a physical complex. Cached arrays were renamed and validated, not re-extracted. Timing, peak memory and both inference/function throughput are recorded.
+- Phase 4 refreshes the main tables, primary figure with locus anchors, per-distance/support paired CIs, label-budget gaps with CIs, macro/compute figure, strict control and findings. High-zero alleles are named with tier AUCs. Unknown assay noise ceiling is stated.
+- Phase 5 retains the local demo, both examples, actual training-fold row counts, nearest better-measured allele, overlap audit and explicit uncertainty limitations. Counts are labelled as belonging to this dataset.
+- Phase 6.3 was already complete and is regression-tested. Other stretch tasks and optional Arms C/D/E remain deferred under the minimum-viable scope.
+- Phase 7 updates README, versions outputs and verifies tests, data fallback and live examples. v1 results/splits/reports are preserved under `results/archive/` and `reports/archive/v1/`.
 
-Interpretation corrections: held-out alleles have zero same-allele training measurements, so stratification uses nearest-training-allele support as a separately named variable. Sequence identity is not an independent measure of generalization difficulty. Synthetic concatenation is not a structural model. P4's between-model comparison cannot be tested without optional Arm D. The old active-learning loss is established; feature geometry as its cause remains a hypothesis.
-
-Verification: seven tests pass. A new clone/environment reran 30 baseline fits using only committed data and reproduced 162,186 predictions with maximum absolute difference 0.0. Both five-arm demo examples pass live API calls. The fresh-clone metadata-only cache bug was repaired. GPU extraction was verified once in the original workspace, not repeated in the clean clone.
+There are 215 fitted-model/budget jobs: 200 reused original fits and 15 new full-budget fits (five arms × two locus holdouts plus one strict fold). New fits began only after v2 split and benchmark designs were written. Re-scoring original predictions under the user's revised metric is explicitly retrospective. The old IEDB scripts and results were not changed for v2.

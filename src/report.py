@@ -1,4 +1,4 @@
-"""Tables, static figures and explicit hypothesis assessment from saved predictions."""
+"""v2 tables and figures: macro within-allele scores and paired confidence intervals."""
 import json
 import os
 os.environ.setdefault('MPLCONFIGDIR','/tmp/hackology-matplotlib')
@@ -7,141 +7,218 @@ matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-from .config import RESULTS, REPORTS, DATA
-from .evaluate import metrics, stratify_by_allele_distance, spearman
+from .config import RESULTS,REPORTS,DATA
+from .evaluate import PRIMARY,allele_metrics,paired_delta_ci,stratify_by_allele_distance
 
-OUT = RESULTS / 'benchmark'
-LABELS = {'blosum_nn':'BLOSUM MLP','blosum_ridge':'BLOSUM Ridge','onehot_ridge':'Allele-ID Ridge',
-          'esm2_mean':'ESM-2 mean','esm2_complex':'ESM-2 residue'}
+OUT=RESULTS/'benchmark'
+LABELS={'blosum_nn':'BLOSUM MLP (reference)','blosum_ridge':'BLOSUM Ridge',
+        'onehot_ridge':'Allele-ID Ridge (floor)','esm2_mean':'ESM-2 mean','esm2_joint':'ESM-2 joint'}
+COLORS=dict(zip(LABELS,['#2563eb','#6b7280','#c0a1c9','#ea580c','#059669']))
+PLMS=['esm2_mean','esm2_joint']
+REGIMES=['peptide','allele','locus','allele_strict']
+
+
+def save_figure(fig,name):
+    fig.savefig(REPORTS/name,dpi=180,bbox_inches='tight')
+    plt.close(fig)
+
+
+def score_ci(scores):
+    rows=[]
+    primary=scores[scores.metric==PRIMARY]
+    for (regime,fraction),g in primary.groupby(['split_regime','fraction']):
+        baseline=g[g.arm=='blosum_nn']
+        for arm,h in g.groupby('arm'):
+            rows.append(dict(arm=arm,baseline='blosum_nn',split_regime=regime,fraction=fraction,
+                             **paired_delta_ci(h,baseline)))
+    return pd.DataFrame(rows)
+
+
+def per_allele(rows):
+    out=[]
+    for (arm,regime,fold),g in rows.groupby(['arm','split_regime','fold']):
+        stat=allele_metrics(g,rows.allele.unique() if regime=='peptide' else None)
+        stat['arm']=arm;stat['split_regime']=regime;stat['fold']=fold
+        stat=stat.merge(rows[['allele','locus']].drop_duplicates(),on='allele',validate='one_to_one')
+        out.append(stat)
+    return pd.concat(out,ignore_index=True)
+
+
+def allele_delta(arms,arm,baseline='blosum_nn'):
+    a=arms[(arms.arm==arm)&arms.label_eligible][['allele','spearman']]
+    b=arms[(arms.arm==baseline)&arms.label_eligible][['allele','spearman']]
+    return paired_delta_ci(a,b,by='allele',value='spearman',method='bootstrap')
+
+
+def distance_analysis(rows,alleles):
+    distance=pd.read_csv(RESULTS/'splits/allele_distance.csv')
+    held=rows[rows.split_regime=='allele']
+    stratify_by_allele_distance(held,distance).to_csv(OUT/'distance_stratified.csv',index=False)
+    meta=distance[['allele','fold','max_identity_to_train','n_train_rows','nearest_train_allele_rows']]
+    a=alleles[alleles.split_regime=='allele'].merge(meta,on=['allele','fold'],validate='many_to_one')
+    a['identity_band']=pd.cut(a.max_identity_to_train,[0,.8,.9,.95,1.0001],right=False,
+                             labels=['<80%','80–90%','90–95%','95–100%'])
+    a['support_band']=pd.cut(a.nearest_train_allele_rows,[0,100,500,1000,np.inf],
+                            labels=['1–100','101–500','501–1000','>1000'])
+    comparisons=[]; absolute=[]
+    for field in ['identity_band','support_band']:
+        for band,g in a.groupby(field,observed=True):
+            for arm,h in g.groupby('arm'):
+                good=h[h.include_in_macro]
+                absolute.append(dict(stratifier=field,band=str(band),arm=arm,
+                    macro=float(good.spearman.mean()),eligible_alleles=len(good),
+                    excluded_alleles=int((~h.include_in_macro).sum())))
+                comparisons.append(dict(stratifier=field,band=str(band),arm=arm,**allele_delta(g,arm)))
+    # A maximum-distance stress point for each observed locus; conditional allele bootstrap.
+    locus_d=pd.read_csv(RESULTS/'splits/locus_distance.csv')
+    for fold,g in alleles[alleles.split_regime=='locus'].groupby('fold'):
+        band=f'Holdout {g.locus.iloc[0]}'
+        for arm,h in g.groupby('arm'):
+            good=h[h.include_in_macro]
+            absolute.append(dict(stratifier='identity_band',band=band,arm=arm,
+                macro=float(good.spearman.mean()),eligible_alleles=len(good),excluded_alleles=int((~h.include_in_macro).sum())))
+            comparisons.append(dict(stratifier='identity_band',band=band,arm=arm,**allele_delta(g,arm),
+                median_identity=float(locus_d.loc[locus_d.fold==fold,'max_identity_to_train'].median())))
+    absolute=pd.DataFrame(absolute);comparisons=pd.DataFrame(comparisons)
+    absolute.to_csv(OUT/'stratified_macro.csv',index=False)
+    comparisons.to_csv(OUT/'stratified_paired_ci.csv',index=False)
+    fig,axes=plt.subplots(1,3,figsize=(17,4.8),layout='constrained')
+    bands=['95–100%','90–95%','80–90%','<80%','Holdout A','Holdout B']
+    for arm in LABELS:
+        g=absolute[(absolute.stratifier=='identity_band')&(absolute.arm==arm)].set_index('band').reindex(bands)
+        axes[0].plot(range(len(bands)),g.macro,marker='o',color=COLORS[arm],label=LABELS[arm])
+    axes[0].set_xticks(range(len(bands)),bands,rotation=30,ha='right')
+    axes[0].set(title='Ranking within held-out alleles',ylabel='Macro within-allele Spearman',xlabel='Nearest training allele identity; locus stress tests')
+    axes[0].legend(fontsize=7,loc='best')
+    for ax,field,order in [(axes[1],'identity_band',bands),(axes[2],'support_band',['1–100','101–500','501–1000','>1000'])]:
+        for j,arm in enumerate(PLMS):
+            g=comparisons[(comparisons.stratifier==field)&(comparisons.arm==arm)].set_index('band').reindex(order)
+            x=np.arange(len(order))+(j-.5)*.12
+            ax.errorbar(x,g.delta,yerr=np.maximum(0,np.vstack([g.delta-g.ci_low,g.ci_high-g.delta])),
+                        marker='o',capsize=3,color=COLORS[arm],label=LABELS[arm])
+        ax.axhline(0,color='black',lw=.8);ax.set_xticks(range(len(order)),order,rotation=30,ha='right')
+        ax.set(ylabel='Paired macro difference vs BLOSUM MLP (95% CI)')
+        ax.legend(fontsize=8)
+    axes[1].set_title('Effect by sequence distance')
+    axes[1].set_xlabel('Identity bands; held-out-locus anchors')
+    axes[2].set_title('Support in this dataset')
+    axes[2].set_xlabel('Measurements of nearest training allele')
+    for ax in axes: ax.grid(alpha=.2)
+    fig.suptitle('Same-allele training rows = 0 throughout. Intervals resample paired alleles within fixed splits.',fontsize=10)
+    save_figure(fig,'allele_distance.png')
+    return comparisons
+
+
+def learning_figures(scores,ci):
+    selected=scores[(scores.metric==PRIMARY)&scores.split_regime.isin(['peptide','allele'])]
+    summary=selected.groupby(['arm','split_regime','fraction']).value.agg(['mean','std','count']).reset_index()
+    summary.to_csv(OUT/'learning_summary.csv',index=False)
+    fig,axes=plt.subplots(1,2,figsize=(11,4.3),layout='constrained')
+    for ax,regime in zip(axes,['peptide','allele']):
+        for arm,g in summary[summary.split_regime==regime].groupby('arm'):
+            ax.plot(g.fraction*100,g['mean'],'o-',color=COLORS[arm],label=LABELS[arm])
+        ax.set(xlabel='Training rows retained (%)',ylabel='Macro within-allele Spearman',title=f'Held-out {regime}')
+        ax.grid(alpha=.2)
+    axes[0].legend(fontsize=8)
+    save_figure(fig,'learning_curve.png')
+    fig,axes=plt.subplots(1,2,figsize=(11,4.3),layout='constrained')
+    for ax,regime in zip(axes,['peptide','allele']):
+        for arm in PLMS:
+            g=ci[(ci.split_regime==regime)&(ci.arm==arm)].sort_values('fraction')
+            ax.errorbar(g.fraction*100,g.delta,yerr=np.maximum(0,np.vstack([g.delta-g.ci_low,g.ci_high-g.delta])),
+                        marker='o',capsize=3,color=COLORS[arm],label=LABELS[arm])
+        ax.axhline(0,color='black',lw=.8)
+        ax.set(xlabel='Training rows retained (%)',ylabel='Macro difference vs BLOSUM MLP (95% paired CI)',title=f'Held-out {regime}')
+        ax.grid(alpha=.2);ax.legend(fontsize=8)
+    save_figure(fig,'learning_gap.png')
+
+
+def controls(alleles):
+    locus=[]
+    for fold,g in alleles[alleles.split_regime=='locus'].groupby('fold'):
+        for arm,h in g.groupby('arm'):
+            locus.append(dict(arm=arm,fold=fold,held_out_locus=h.locus.iloc[0],
+                macro=float(h.loc[h.include_in_macro,'spearman'].mean()),
+                eligible_alleles=int(h.include_in_macro.sum()),**allele_delta(g,arm)))
+    pd.DataFrame(locus).to_csv(OUT/'locus_paired_ci.csv',index=False)
+    strict=[];reference=[]
+    s=alleles[alleles.split_regime=='allele_strict']
+    p=alleles[(alleles.split_regime=='allele')&(alleles.fold==0)]
+    for arm in LABELS:
+        a=s[(s.arm==arm)&s.label_eligible][['allele','spearman']]
+        b=p[(p.arm==arm)&p.label_eligible][['allele','spearman']]
+        strict.append(dict(arm=arm,strict_macro=float(a.spearman.mean()),permissive_macro=float(b.spearman.mean()),
+                           **paired_delta_ci(a,b,by='allele',value='spearman',method='bootstrap')))
+        reference.append(dict(arm=arm,**allele_delta(s,arm)))
+    pd.DataFrame(strict).to_csv(OUT/'strict_vs_permissive.csv',index=False)
+    pd.DataFrame(reference).to_csv(OUT/'strict_vs_baseline_ci.csv',index=False)
+
+
+def compute_plot(summary):
+    fit=pd.read_csv(OUT/'fit_compute.csv'); rows=[]
+    for arm in LABELS:
+        path=DATA/'processed'/f'{arm}_meta.json'
+        m=json.loads(path.read_text()) if path.exists() else {}
+        seconds=m.get('gpu_seconds',0); n=sum(b['sequences'] for b in m.get('batches',[]))
+        rows.append(dict(arm=arm,gpu_seconds=seconds,peak_gpu_memory_bytes=m.get('peak_gpu_memory_bytes',0),
+            extraction_sequences=n,inference_sequences_per_second=n/m['inference_seconds'] if n else np.nan,
+            gpu_function_sequences_per_second=n/seconds if n else np.nan,
+            cpu_fit_predict_seconds_full_budget=fit[(fit.arm==arm)&(fit.fraction==1)].fit_predict_cpu_wall_seconds.sum(),
+            new_v2_cpu_fit_predict_seconds=fit[(fit.arm==arm)&fit.split_regime.isin(['locus','allele_strict'])].fit_predict_cpu_wall_seconds.sum()))
+    compute=pd.DataFrame(rows);compute.to_csv(OUT/'compute.csv',index=False)
+    fig,axes=plt.subplots(1,2,figsize=(12,4.5),layout='constrained')
+    for ax,regime in zip(axes,['peptide','allele']):
+        for i,row in compute.iterrows():
+            g=summary[(summary.arm==row.arm)&(summary.split_regime==regime)&(summary.metric==PRIMARY)].iloc[0]
+            ax.scatter(row.gpu_seconds,g['mean'],color=COLORS[row.arm],s=45)
+            label=LABELS[row.arm].replace(' (reference)','').replace(' (floor)','')
+            offset=(5,(-12 if row.arm=='onehot_ridge' else 8)) if row.gpu_seconds==0 else (-6,8)
+            ax.annotate(label,(row.gpu_seconds,g['mean']),xytext=offset,textcoords='offset points',
+                        ha='left' if row.gpu_seconds==0 else 'right',fontsize=8)
+        ax.set(xlabel='One-time extraction GPU seconds',ylabel='Macro within-allele Spearman',title=f'Held-out {regime}')
+        ax.set_xscale('symlog',linthresh=1);ax.grid(alpha=.2)
+    fig.suptitle('CPU fitting and throughput are reported separately; GPU seconds are not total cost.',fontsize=10)
+    save_figure(fig,'compute_performance.png')
 
 
 def main():
-    REPORTS.mkdir(exist_ok=True)
-    scores = pd.read_csv(OUT/'per_fold.csv')
-    from .run_benchmark import ARMS
-    counts=scores[scores.metric=='spearman'].groupby(['arm','split_regime']).fold.nunique()
-    assert all(counts.get((a,r),0)==5 for a in ARMS for r in ['peptide','allele']), 'Run all five core arms and folds before generating the final report.'
-    rows = pd.read_csv(OUT/'per_row.csv')
-    summary = scores.groupby(['arm','split_regime','metric']).value.agg(['mean','std','count']).reset_index()
+    scores=pd.read_csv(OUT/'per_fold.csv')
+    if not set(REGIMES)<=set(scores.split_regime): raise ValueError('Complete all v2 regimes before reporting')
+    full=scores[scores.fraction==1]
+    expected={'peptide':5,'allele':5,'locus':2,'allele_strict':1}
+    for (arm,regime),g in full[full.metric==PRIMARY].groupby(['arm','split_regime']):
+        assert len(g)==expected[regime],(arm,regime,len(g))
+    rows=pd.read_csv(OUT/'per_row.csv')
+    summary=full.groupby(['arm','split_regime','metric']).value.agg(['mean','std','count']).reset_index()
     summary.to_csv(OUT/'summary.csv',index=False)
-    distance = pd.read_csv(RESULTS/'splits/allele_distance.csv')
-    held = rows[rows.split_regime == 'allele']
-    strat = stratify_by_allele_distance(held,distance)
-    strat.to_csv(OUT/'distance_stratified.csv',index=False)
-    allele_stats=[]
-    for (arm,allele,fold),g in held.groupby(['arm','allele','fold']):
-        allele_stats.append(dict(arm=arm,allele=allele,fold=fold,rows=len(g),**metrics(g.y_true,g.y_pred)))
-    allele_stats=pd.DataFrame(allele_stats).merge(distance,on=['allele','fold'],validate='many_to_one')
-    allele_stats.to_csv(OUT/'per_allele.csv',index=False)
-    fig,axes=plt.subplots(1,2,figsize=(12,4.6),constrained_layout=True)
-    for arm,g in strat.groupby('arm'):
-        axes[0].plot(g.identity_band,g.macro_allele_spearman,'o-',label=LABELS[arm])
-    axes[0].set(xlabel='Nearest training allele: pseudosequence identity',ylabel='Mean within-allele Spearman',title='Held-out alleles: sequence distance')
-    allele_stats['support_band']=pd.cut(allele_stats.nearest_train_allele_rows,[0,100,500,1000,np.inf],labels=['1–100','101–500','501–1000','>1000'])
-    support=allele_stats.groupby(['arm','support_band'],observed=True).agg(spearman=('spearman','mean'),alleles=('allele','size')).reset_index()
-    support.to_csv(OUT/'support_stratified.csv',index=False)
-    allele_stats['identity_band']=pd.cut(allele_stats.max_identity_to_train_allele,[0,.8,.9,.95,1.0001],right=False,labels=['<80%','80–90%','90–95%','95–100%'])
-    base=allele_stats[allele_stats.arm=='blosum_nn'][['allele','spearman']].rename(columns={'spearman':'baseline_spearman'})
-    joint=allele_stats.merge(base,on='allele',validate='many_to_one')
-    joint['gap']=joint.spearman-joint.baseline_spearman
-    joint=joint[joint.arm.isin(['esm2_mean','esm2_complex'])].groupby(['arm','identity_band','support_band'],observed=True).agg(gap=('gap','mean'),alleles=('gap','count')).reset_index()
-    joint.to_csv(OUT/'distance_support_gaps.csv',index=False)
-    heat,heat_axes=plt.subplots(1,2,figsize=(11,4.2),constrained_layout=True)
-    for ax,arm in zip(heat_axes,['esm2_mean','esm2_complex']):
-        g=joint[joint.arm==arm]
-        grid=g.pivot(index='identity_band',columns='support_band',values='gap').reindex(index=['<80%','80–90%','90–95%','95–100%'],columns=['1–100','101–500','501–1000','>1000'])
-        count=g.pivot(index='identity_band',columns='support_band',values='alleles').reindex(index=grid.index,columns=grid.columns)
-        im=ax.imshow(grid.to_numpy(dtype=float),vmin=-.6,vmax=.6,cmap='RdBu',aspect='auto')
-        for i in range(4):
-            for j in range(4):
-                if np.isfinite(grid.iloc[i,j]):
-                    ax.text(j,i,f'{grid.iloc[i,j]:+.2f}\nn={int(count.iloc[i,j])}',ha='center',va='center',fontsize=8)
-        ax.set_xticks(range(4),grid.columns)
-        ax.set_yticks(range(4),grid.index)
-        ax.set(xlabel='Measurements of nearest training allele',ylabel='Nearest allele identity',title=LABELS[arm]+' minus BLOSUM MLP')
-    heat.colorbar(im,ax=heat_axes,label='Mean within-allele Spearman difference',shrink=.8)
-    heat.savefig(REPORTS/'allele_joint_gap.png',dpi=180)
-    plt.close(heat)
-
-    for arm,g in support.groupby('arm'):
-        axes[1].plot(g.support_band.astype(str),g.spearman,'o-',label=LABELS[arm])
-    axes[1].set(xlabel='Measurements of nearest training allele',ylabel='Mean within-allele Spearman',title='Support from a neighbouring allele')
-    axes[0].legend(fontsize=8)
-    for ax in axes: ax.grid(alpha=.2)
-    fig.savefig(REPORTS/'allele_distance.png',dpi=180)
-    plt.close(fig)
-    # Full paired gaps, not a claim of significance from correlated CV folds.
-    pairs=[]
-    for regime in ['peptide','allele']:
-        p=scores[(scores.split_regime==regime)&(scores.metric=='spearman')].pivot(index='fold',columns='arm',values='value')
-        for arm in ['esm2_mean','esm2_complex']:
-            if arm in p:
-                for baseline in ['blosum_nn','blosum_ridge']:
-                    for fold in p.index:
-                        pairs.append(dict(arm=arm,baseline=baseline,split_regime=regime,fold=fold,gap=p.loc[fold,arm]-p.loc[fold,baseline]))
-    pd.DataFrame(pairs,columns=['arm','baseline','split_regime','fold','gap']).to_csv(OUT/'paired_gaps.csv',index=False)
-    learning=pd.read_csv(OUT/'learning_curve.csv')
-    ls=learning.groupby(['arm','split_regime','fraction','metric']).value.agg(['mean','std','count']).reset_index()
-    ls.to_csv(OUT/'learning_summary.csv',index=False)
-    fig,axes=plt.subplots(1,2,figsize=(11,4.3),constrained_layout=True)
-    for ax,regime in zip(axes,['peptide','allele']):
-        for arm,g in ls[(ls.metric=='spearman')&(ls.split_regime==regime)].groupby('arm'):
-            ax.errorbar(g.fraction*100,g['mean'],yerr=g['std'],marker='o',capsize=3,label=LABELS[arm])
-        ax.set(xlabel='Training rows retained (%)',ylabel='Spearman (mean ± fold SD)',title=f'Held-out {regime}')
-        ax.grid(alpha=.2)
-    axes[0].legend(fontsize=8)
-    fig.savefig(REPORTS/'learning_curve.png',dpi=180)
-    plt.close(fig)
-    # Gap curve assesses P3 directly.
-    gap_rows=[]
-    for (regime,fraction,fold),g in learning[learning.metric=='spearman'].groupby(['split_regime','fraction','fold']):
-        values=g.set_index('arm').value
-        for arm in ['esm2_mean','esm2_complex']:
-            if arm in values and 'blosum_nn' in values:
-                gap_rows.append(dict(split_regime=regime,fraction=fraction,fold=fold,arm=arm,gap=values[arm]-values['blosum_nn']))
-    gap_df=pd.DataFrame(gap_rows,columns=['split_regime','fraction','fold','arm','gap'])
-    gap_df.to_csv(OUT/'learning_gaps.csv',index=False)
-    if len(gap_df):
-        fig,axes=plt.subplots(1,2,figsize=(11,4),constrained_layout=True)
-        for ax,regime in zip(axes,['peptide','allele']):
-            for arm,g in gap_df[gap_df.split_regime==regime].groupby('arm'):
-                stat=g.groupby('fraction').gap.agg(['mean','std'])
-                ax.errorbar(stat.index*100,stat['mean'],yerr=stat['std'],marker='o',label=LABELS[arm])
-            ax.axhline(0,color='black',lw=.7)
-            ax.set(xlabel='Training rows retained (%)',ylabel='Spearman gap vs BLOSUM MLP',title=regime)
-            ax.legend(fontsize=8)
-        fig.savefig(REPORTS/'learning_gap.png',dpi=180)
-        plt.close(fig)
-    compute=[]
-    fits=pd.read_csv(OUT/'fit_compute.csv')
-    for arm in sorted(rows.arm.unique()):
-        meta_path=DATA/'processed'/f'{arm}_meta.json'
-        meta=json.loads(meta_path.read_text()) if meta_path.exists() else {}
-        compute.append(dict(arm=arm,gpu_seconds=meta.get('gpu_seconds',0),
-            peak_gpu_memory_bytes=meta.get('peak_gpu_memory_bytes',0),
-            cpu_fit_predict_seconds=fits[(fits.arm==arm)&(fits.fraction==1)].fit_predict_cpu_wall_seconds.sum()))
-    compute=pd.DataFrame(compute)
-    compute.to_csv(OUT/'compute.csv',index=False)
-    fig,ax=plt.subplots(figsize=(8,4.5),constrained_layout=True)
-    for regime,marker in [('peptide','o'),('allele','s')]:
-        for i,row in compute.iterrows():
-            val=summary[(summary.arm==row.arm)&(summary.split_regime==regime)&(summary.metric=='spearman')]['mean'].iloc[0]
-            ax.scatter(row.gpu_seconds,val,marker=marker)
-            ax.annotate(f'{LABELS[row.arm]} ({regime})',(row.gpu_seconds,val),xytext=((-7 if row.gpu_seconds>0 else 5),5+i*3),ha=('right' if row.gpu_seconds>0 else 'left'),textcoords='offset points',fontsize=7)
-    ax.set(xlabel='One-time GPU extraction seconds (CPU fitting reported separately)',ylabel='Spearman',title='Representation compute and predictive performance')
-    ax.set_xscale('symlog',linthresh=1)
-    ax.grid(alpha=.2)
-    fig.savefig(REPORTS/'compute_performance.png',dpi=180)
-    plt.close(fig)
-    table=['| Arm | Held-out peptide ρ | Held-out allele ρ |','|---|---:|---:|']
-    for arm in sorted(rows.arm.unique()):
-        vals=[]
-        for regime in ['peptide','allele']:
-            s=summary[(summary.arm==arm)&(summary.split_regime==regime)&(summary.metric=='spearman')].iloc[0]
-            vals.append(f'{s["mean"]:.3f} ± {s["std"]:.3f}')
-        table.append(f'| {LABELS[arm]} | {vals[0]} | {vals[1]} |')
-    (REPORTS/'benchmark_table.md').write_text('\n'.join(table)+'\n')
-    print('\n'.join(table))
+    ci=score_ci(scores);ci.to_csv(OUT/'paired_comparisons.csv',index=False)
+    # Direct A/B extraction comparison is paired too (P4's tested part).
+    contrasts=[]
+    for (regime,fraction),g in scores[scores.metric==PRIMARY].groupby(['split_regime','fraction']):
+        contrasts.append(dict(arm='esm2_joint',baseline='esm2_mean',split_regime=regime,fraction=fraction,
+            **paired_delta_ci(g[g.arm=='esm2_joint'],g[g.arm=='esm2_mean'])))
+    pd.DataFrame(contrasts).to_csv(OUT/'extraction_paired_ci.csv',index=False)
+    a=per_allele(rows);a.to_csv(OUT/'per_allele.csv',index=False)
+    a[(a.split_regime=='allele') & a.high_zero_fraction].to_csv(OUT/'high_zero_summary.csv',index=False)
+    REPORTS.mkdir(exist_ok=True)
+    controls(a);distance_analysis(rows,a);learning_figures(scores,ci);compute_plot(summary)
+    tables=[]
+    for regime in REGIMES:
+        tables += [f'### {regime}', '', '| Arm | Macro ρ ± fold SD | Δ vs MLP [95% CI] | Pooled ρ | Pooled − macro |',
+                   '|---|---:|---:|---:|---:|']
+        for arm in LABELS:
+            g=summary[(summary.arm==arm)&(summary.split_regime==regime)].set_index('metric')
+            macro=g.loc[PRIMARY];p=g.loc['pooled_spearman','mean'];gap=g.loc['pooled_minus_macro','mean']
+            c=ci[(ci.arm==arm)&(ci.split_regime==regime)&(ci.fraction==1)].iloc[0]
+            if regime=='allele_strict':
+                c=pd.read_csv(OUT/'strict_vs_baseline_ci.csv').set_index('arm').loc[arm]
+            delta='reference' if arm=='blosum_nn' else f'{c.delta:+.3f} [{c.ci_low:+.3f}, {c.ci_high:+.3f}]'
+            score=f'{macro["mean"]:.3f}' if regime=='allele_strict' else f'{macro["mean"]:.3f} ± {macro["std"]:.3f}'
+            tables.append(f'| {LABELS[arm]} | {score} | {delta} | {p:.3f} | {gap:+.3f} |')
+        tables+=['']
+    tables+=['Peptide/allele: paired t intervals over five folds. Locus summary: two-fold t interval, highly unstable; see per-locus paired-allele intervals. Strict: paired-allele bootstrap conditional on fold 0. Intervals do not account for shared training data or method selection.']
+    (REPORTS/'benchmark_table.md').write_text('\n'.join(tables)+'\n')
+    print('\n'.join(tables))
 
 
-if __name__=='__main__': main()
+if __name__=='__main__':main()

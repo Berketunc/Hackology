@@ -96,3 +96,74 @@ def test_clone_metadata_does_not_imply_embedding_cache(tmp_path):
     assert not embedding_arm_available('esm2_mean',tmp_path)
     np.save(tmp_path/'esm2_mean_row_ids.npy',np.array([0,1]))
     assert embedding_arm_available('esm2_mean',tmp_path)
+
+
+def test_macro_eligibility_equal_weights_and_explicit_exclusions():
+    from src.evaluate import macro_within_allele_spearman, allele_metrics
+    frames=[]
+    for allele,n,direction in [('large',100,1),('small',20,-1),('too_few_rows',19,1)]:
+        y=np.log1p(np.arange(1,n+1))
+        frames.append(pd.DataFrame({'allele':allele,'y_true':y,'y_pred':direction*y}))
+    frames.append(pd.DataFrame({'allele':'too_few_values','y_true':np.log1p(np.tile(np.arange(10),3)),'y_pred':np.arange(30)}))
+    rows=pd.concat(frames)
+    assert abs(macro_within_allele_spearman(rows))<1e-12
+    audit=allele_metrics(rows).set_index('allele')
+    assert audit.include_in_macro.sum()==2
+    assert '20_test_rows' in audit.loc['too_few_rows','exclusion_reason']
+    assert '10_distinct_nonzero' in audit.loc['too_few_values','exclusion_reason']
+    # Undefined predictions must not silently remove one of the eligible alleles.
+    rows.loc[rows.allele=='small','y_pred']=0
+    assert np.isnan(macro_within_allele_spearman(rows))
+
+
+def test_primary_is_not_pooled_and_zero_rich_auc_remains_available():
+    from src.evaluate import macro_within_allele_spearman, pooled_spearman, allele_metrics
+    y=np.tile(np.arange(1,21),2)+np.repeat([0,100],20)
+    pred=np.tile(np.arange(20,0,-1),2)+np.repeat([0,100],20)
+    frame=pd.DataFrame({'allele':np.repeat(['A','B'],20),'y_true':np.log1p(y),'y_pred':pred})
+    assert np.isclose(macro_within_allele_spearman(frame),-1)
+    assert pooled_spearman(frame)>0
+    y=np.log1p(np.r_[np.zeros(70),np.arange(1,31)])
+    stats=allele_metrics(pd.DataFrame({'allele':'Z','y_true':y,'y_pred':y})).iloc[0]
+    assert stats.include_in_macro and stats.high_zero_fraction
+    assert stats.zero_fraction==.7 and stats.auc_2h==stats.auc_6h==1
+
+
+def test_paired_ci_aligns_units_and_matches_scipy():
+    import pytest
+    from scipy.stats import ttest_rel
+    from src.evaluate import paired_delta_ci
+    a=pd.DataFrame({'fold':np.arange(5),'value':[.4,.6,.2,.5,.3]})
+    b=pd.DataFrame({'fold':np.arange(5),'value':[.3,.2,.3,.4,.1]})
+    expected=ttest_rel(a.value,b.value).confidence_interval()
+    result=paired_delta_ci(a.sample(frac=1,random_state=4),b)
+    assert np.isclose(result['ci_low'],expected.low) and np.isclose(result['ci_high'],expected.high)
+    assert result['n_pairs']==5 and result['n_unscorable_pairs']==0
+    assert paired_delta_ci(a,b,method='bootstrap')==paired_delta_ci(a,b,method='bootstrap')
+    with pytest.raises(AssertionError): paired_delta_ci(a,b.iloc[:-1])
+    assert np.isnan(paired_delta_ci(a.iloc[:1],b.iloc[:1])['ci_low'])
+
+
+def test_locus_and_strict_splits_are_group_safe():
+    from src.splits import split_indices
+    df=prepare()
+    assert set(df.locus)=={'A','B'}
+    for fold,tr,te in split_indices(df,'locus'):
+        assert not set(df.iloc[tr].locus)&set(df.iloc[te].locus)
+        assert not set(df.iloc[tr].allele)&set(df.iloc[te].allele)
+    _,tr,te=next(split_indices(df,'allele_strict'))
+    _,permissive_train,permissive_test=next(split_indices(df,'allele'))
+    np.testing.assert_array_equal(te,permissive_test)
+    assert len(tr)==7794 and len(permissive_train)-len(tr)==15085
+    assert not set(df.iloc[tr].peptide)&set(df.iloc[te].peptide)
+    assert set(tr)<set(permissive_train)
+
+
+def test_absent_test_alleles_have_explicit_zero_count_audit():
+    from src.evaluate import allele_metrics,metrics
+    y=np.log1p(np.arange(1,21))
+    frame=pd.DataFrame({'allele':'A','y_true':y,'y_pred':y})
+    stats=allele_metrics(frame,['A','B']).set_index('allele')
+    assert stats.loc['B','n_test_rows']==0 and not stats.loc['B','include_in_macro']
+    result=metrics(y,y,np.repeat('A',20),['A','B'])
+    assert result['macro_eligible_alleles']==1 and result['macro_excluded_alleles']==1

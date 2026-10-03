@@ -1,20 +1,34 @@
 {
   "seed": 0,
   "folds": 5,
+  "version": 2,
   "split_regimes": [
     "peptide",
-    "allele"
+    "allele",
+    "locus",
+    "allele_strict"
   ],
   "arms": [
     "blosum_nn",
     "blosum_ridge",
     "onehot_ridge",
     "esm2_mean",
-    "esm2_complex"
+    "esm2_joint"
   ],
   "target": "log1p(hours)",
-  "primary_metric": "spearman",
-  "companion_metric": "macro_allele_spearman",
+  "primary_metric": "macro_within_allele_spearman",
+  "companion_metric": "pooled_spearman",
+  "minimum_test_rows": 20,
+  "minimum_distinct_nonzero_half_lives": 10,
+  "high_zero_fraction": 0.5,
+  "reference_baseline": "blosum_nn",
+  "illustrative_floor": "onehot_ridge",
+  "paired_ci": "95% paired t interval over folds; per-locus and strict fold use paired allele bootstrap (seed 0; 10000 resamples)",
+  "metric_eligibility_scope": "Within each evaluation fold, based on test labels; exclusions exported for every arm/budget/fold",
+  "original_fits": "200 v1 jobs reused unchanged from results/archive/benchmark_v1; v2 macro/CI reanalysis is retrospective",
+  "seed_schedule": "outer split seed=0; model/PCA/inner-validation/nested-subset seed=outer fold",
+  "strict_budget": "full retained strict training set only; compared with permissive fold0, not an isolated causal estimate of bleed",
+  "locus_budget": "full training rows for each observed locus holdout; no C locus is present",
   "ridge_head": "StandardScaler -> randomized PCA (up to 256) -> RidgeCV LOO; all fit on outer training only",
   "alphas": [
     0.01,
@@ -45,10 +59,12 @@
     1.0001
   ],
   "pca_note": "Same 256-component preprocessing rule and Ridge head for all Ridge arms; NN is a separate challenge baseline.",
-  "inference_note": "Synthetic concatenation conditions attention, not a validated structural complex.",
+  "inference_note": "Joint sequence encoding permits cross-token attention; it does not establish a physical complex representation.",
   "data_sha256": "17c574c2c6d2746a238804bd73fa05279ae23e476be5df124dc084e116635658",
   "split_hashes": {
     "peptide": "b4b8d4ef6bb65ff216c464a59be430eae13bf02b4a55ca7a9c64821245ff45b1",
-    "allele": "56292c79a5195c1de2d366aa15e56bfd7c5add2928d1fc1e3e342ef202395f74"
-  }
+    "allele": "56292c79a5195c1de2d366aa15e56bfd7c5add2928d1fc1e3e342ef202395f74",
+    "locus": "3de49c94138d9ff2cf8e6c5b7f5e5d75904bc24655949276dee26ee2af16f63a"
+  },
+  "strict_split_hash": "738b7c07dd07d1ca14723302ca7054b727098a1a7f8553a330999e6ecf23737f"
 }

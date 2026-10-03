@@ -28,11 +28,11 @@ def build_app():
         card=gr.Markdown()
         table=gr.Dataframe(interactive=False,label='Predictions and fold sensitivity')
         gr.Examples(examples=examples,inputs=[peptide,allele],outputs=[card,table],fn=compare,cache_examples=False,
-                    label='Try a well-measured or under-measured allele',run_on_click=True)
+                    label='Try a well-measured or sparsely measured allele in this dataset',run_on_click=True)
         submit.click(compare,[peptide,allele],[card,table])
         demo.load(compare,[peptide,allele],[card,table])
         gr.Markdown('Zeros are retained as reported, although they may be censored. Engineered C67S constructs are excluded. '
-                    'The fold range is not calibrated uncertainty. No laboratory savings or clinical utility are established.')
+                    'The fold range is not calibrated uncertainty. Dataset counts are not population frequencies. No laboratory savings or clinical utility are established.')
     return demo
 
 

@@ -1,0 +1,12 @@
+{
+  "arm": "blosum_nn",
+  "split_regime": "locus",
+  "fold": 1,
+  "fraction": 1.0,
+  "n_train": 13335,
+  "seed": 1,
+  "training_row_ids_sha256": "914e8d228e0ed8d7077e65dec8b49bec909aab1892ba809fa579596b57fd3442",
+  "fit_predict_cpu_wall_seconds": 2.000595749996137,
+  "alpha": null,
+  "best_epoch": 21
+}

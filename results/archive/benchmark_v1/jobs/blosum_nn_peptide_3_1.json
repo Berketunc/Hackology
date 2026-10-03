@@ -1,0 +1,12 @@
+{
+  "arm": "blosum_nn",
+  "split_regime": "peptide",
+  "fold": 3,
+  "fraction": 1.0,
+  "n_train": 21520,
+  "fit_predict_cpu_wall_seconds": 2.985771042003762,
+  "alpha": null,
+  "best_epoch": 23,
+  "seed": 3,
+  "training_row_ids_sha256": "6bc69ae96041a04604d41718132adb2e65369b344b34fec8b18f7025a70e19bf"
+}

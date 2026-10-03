@@ -8,5 +8,7 @@
   "alpha": 0.1,
   "best_epoch": null,
   "seed": 2,
-  "training_row_ids_sha256": "d83ceae1a018dd29ca0aac16a64002a96160e5b0354933bcf84c3b579592bcc8"
+  "training_row_ids_sha256": "d83ceae1a018dd29ca0aac16a64002a96160e5b0354933bcf84c3b579592bcc8",
+  "provenance": "v1 fit reused; v2 metrics recomputed, no model selection on test labels",
+  "original_job": "results/archive/benchmark_v1/jobs/onehot_ridge_peptide_2_1.json"
 }

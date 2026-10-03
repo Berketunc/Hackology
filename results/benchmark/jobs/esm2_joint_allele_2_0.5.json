@@ -1,0 +1,14 @@
+{
+  "arm": "esm2_joint",
+  "split_regime": "allele",
+  "fold": 2,
+  "fraction": 0.5,
+  "n_train": 10704,
+  "fit_predict_cpu_wall_seconds": 6.552112500008661,
+  "alpha": 10000.0,
+  "best_epoch": null,
+  "seed": 2,
+  "training_row_ids_sha256": "a499e5a35addc499654f37dc20fa6226452e797c737a9b8bd48a6ff89a08e17b",
+  "provenance": "v1 fit reused; v2 metrics recomputed, no model selection on test labels",
+  "original_job": "results/archive/benchmark_v1/jobs/esm2_complex_allele_2_0.5.json"
+}

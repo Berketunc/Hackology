@@ -1,0 +1,54 @@
+{
+  "seed": 0,
+  "folds": 5,
+  "split_regimes": [
+    "peptide",
+    "allele"
+  ],
+  "arms": [
+    "blosum_nn",
+    "blosum_ridge",
+    "onehot_ridge",
+    "esm2_mean",
+    "esm2_complex"
+  ],
+  "target": "log1p(hours)",
+  "primary_metric": "spearman",
+  "companion_metric": "macro_allele_spearman",
+  "ridge_head": "StandardScaler -> randomized PCA (up to 256) -> RidgeCV LOO; all fit on outer training only",
+  "alphas": [
+    0.01,
+    0.1,
+    1.0,
+    10.0,
+    100.0,
+    1000.0,
+    10000.0,
+    100000.0
+  ],
+  "nn": "BLOSUM62; 256/64 ReLU; AdamW lr=.001 wd=.01; max150 epochs; patience15; training-only group validation 15%",
+  "checkpoint": "facebook/esm2_t33_650M_UR50D",
+  "hidden_size": 1280,
+  "linker": "GGGG",
+  "representation": "A: separate mean peptide/pseudoseq; B: 9 peptide hidden states of peptide+GGGG+pseudoseq",
+  "learning_fractions": [
+    0.1,
+    0.25,
+    0.5,
+    1.0
+  ],
+  "identity_bands": [
+    0,
+    0.8,
+    0.9,
+    0.95,
+    1.0001
+  ],
+  "pca_note": "Same 256-component preprocessing rule and Ridge head for all Ridge arms; NN is a separate challenge baseline.",
+  "inference_note": "Synthetic concatenation conditions attention, not a validated structural complex.",
+  "data_sha256": "17c574c2c6d2746a238804bd73fa05279ae23e476be5df124dc084e116635658",
+  "split_hashes": {
+    "peptide": "b4b8d4ef6bb65ff216c464a59be430eae13bf02b4a55ca7a9c64821245ff45b1",
+    "allele": "56292c79a5195c1de2d366aa15e56bfd7c5add2928d1fc1e3e342ef202395f74"
+  }
+}

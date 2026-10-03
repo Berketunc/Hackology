@@ -8,5 +8,7 @@
   "alpha": 1000.0,
   "best_epoch": null,
   "seed": 1,
-  "training_row_ids_sha256": "207de6e7e8536bdb3ac329a3fdece94a7d439232637301a101b9d832699f9cc7"
+  "training_row_ids_sha256": "207de6e7e8536bdb3ac329a3fdece94a7d439232637301a101b9d832699f9cc7",
+  "provenance": "v1 fit reused; v2 metrics recomputed, no model selection on test labels",
+  "original_job": "results/archive/benchmark_v1/jobs/esm2_mean_peptide_1_0.25.json"
 }

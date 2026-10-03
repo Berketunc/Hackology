@@ -8,5 +8,7 @@
   "alpha": null,
   "best_epoch": 15,
   "seed": 4,
-  "training_row_ids_sha256": "f2ce092b60d4813f52431f40ea37d5938c6b64d8ffeb255e1b87d78b7b8a4d59"
+  "training_row_ids_sha256": "f2ce092b60d4813f52431f40ea37d5938c6b64d8ffeb255e1b87d78b7b8a4d59",
+  "provenance": "v1 fit reused; v2 metrics recomputed, no model selection on test labels",
+  "original_job": "results/archive/benchmark_v1/jobs/blosum_nn_peptide_4_0.25.json"
 }

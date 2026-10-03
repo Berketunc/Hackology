@@ -8,5 +8,7 @@
   "alpha": null,
   "best_epoch": 7,
   "seed": 3,
-  "training_row_ids_sha256": "281e4c9e75f020a8ad9caf10387989e54ca3ba3a6086f46fd1ba1c88a42c7f07"
+  "training_row_ids_sha256": "281e4c9e75f020a8ad9caf10387989e54ca3ba3a6086f46fd1ba1c88a42c7f07",
+  "provenance": "v1 fit reused; v2 metrics recomputed, no model selection on test labels",
+  "original_job": "results/archive/benchmark_v1/jobs/blosum_nn_allele_3_0.5.json"
 }
