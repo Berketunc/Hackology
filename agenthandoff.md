@@ -1,13 +1,15 @@
 # Agent handoff: active learning for peptide–HLA stability
 
-Updated: 3 October 2026  
-Workspace: /Users/berketunc/Documents/ChatGPT/hackology
+Updated: 3 October 2026 (session 2: source review, pilots, embeddings, and the three-policy comparison are DONE)  
+Workspace: /Users/berketunc/Hackology
 
 ## Start here: current handoff to Codex CLI
 
-The user has rerun the corrected audit and supplied the revised files. These were inspected and their reported counts agree with the records. The screening correction is complete. Continue from the revised outputs; do not restart broad dataset searching or require another full IEDB export before making progress.
+**Session 2 completed the full pipeline through the three-policy active-learning comparison.** Everything below remains accurate as background; the new state is summarised in Section 0 and detailed in `reports/al_comparison.md`.
 
-Immediate task: verify the main candidate subset's experimental conditions, prepare a documented eligible dataset, and run the inexpensive sequence-based pilot. If that supports continued work, implement the three-policy active-learning comparison described below. Work through the implementation and report evidence, rather than returning another high-level proposal.
+Headline result (development set only, final test untouched): **random acquisition beat both sequence-diversity and embedding-diversity at every budget in all 10 seeds** — a clean negative result for pure diversity acquisition with this predictor. Under an identical Ridge fitting procedure, one-hot positional features also beat mean-pooled ESM-2 pair features (0.912 vs ~1.11 at 2,076 labels; ~0.93 with proper regularisation). The result is robust to a sequence-similarity sensitivity analysis.
+
+Natural next step before any demo: test an **uncertainty-based acquisition policy** (bootstrap-ensemble or GP regression on the same frozen ESM-2 features, same partitions, same budgets) to separate "diversity doesn't help" from "embeddings don't help". Final-test evaluation stays reserved for a locked design.
 
 Use the four files with " 2" in their names in Section 4 as the current inputs. Preserve both versions in Downloads. Write code, reviewed derivatives, provenance notes, manifests, and results under this workspace in clearly named directories. Do not mark all rows approved or fill missing temperature merely to make the pilot run.
 
@@ -15,7 +17,42 @@ The corrected audit leaves 6,101 rows with no automatic flags. The main candidat
 
 New source evidence: the cited method paper, PMID 21044632, explicitly describes initiating dissociation at 37°C. Use https://pmc.ncbi.nlm.nih.gov/articles/PMC4341823/ and its methods as evidence. Distinguish this published protocol fact from the remaining question of whether each IEDB submission followed that protocol without changes. Record the source and inference level of any temperature annotation.
 
-No pilot or embedding experiment has been run yet. No dataset has been scientifically approved, no final test set has been evaluated, and no model improvement has been demonstrated.
+Session 2 (see Section 0): the pilots, embedding extraction, predictor comparison, and three-policy comparison have all been run; a source-reviewed eligible dataset exists. The final test set has still never been evaluated, and no model improvement over simple baselines has been demonstrated — the diversity-policy result was negative.
+
+## 0. Session 2 state (what now exists)
+
+### Verified and prepared
+
+- **Reconciliation**: `scripts/reconcile_audit.py` confirms every count in `audit_summary 2.json` recomputes exactly from `records_for_review 2.csv` (10,605 rows; 6,101 unflagged; 5,815 candidates; 0 duplicate assay IDs).
+- **Source verification (new evidence)**: all 10 IEDB submission references (1028282–1028294) were fetched live on 2026-10-03; each carries the identical abstract stating data were "generated using a scintillation proximity assay based peptide-HLA-I dissociation assay (PMID: 21044632)". PMC4341823 §2.5 was re-verified: refold at 18 °C, dissociation initiated at 37 °C on a 37 °C-modified TopCount. Evidence chain in `reports/source_review.md`.
+- **Eligible dataset**: `data/processed/eligible_records.csv` — 5,815 rows batch-approved at submission level, `temperature_C=37.0` marked **protocol-derived**, `protocol_id=SPA_PMID21044632_37C`, per-row `review_evidence`. `excluded_records.csv` keeps all 4,790 other rows with reasons. `eligible_hla_a0201.csv` is the 977-row A*02:01 subset.
+- **Manifests**: `data/manifests/input_manifest.json` + `dataset_manifest.json` — SHA-256 for all inputs incl. `mhc_ligand_full.csv` (`a480284f…50a30`, confirmed two-header raw IEDB export). Volatile /tmp snapshots promoted to `data/external/` (Rasmussen sheet + 6 SPEARMINT split files) with `SHA256SUMS.txt`.
+- **Overlap audit** (`reports/overlap_report.json`): 5,517/5,815 pairs match the Rasmussen sheet; 5,490 exactly equal in hours, rest within 0.003 h; the 298 unmatched are all non-9-mers (sheet is 9-mers only). **5,807/5,815 eligible pairs appear in SPEARMINT files** (4,420 in its stability-train) — a SPEARMINT stability checkpoint may never supply embeddings here.
+- **Unresolved assumptions** (documented, still open): protocol adherence assumed not per-row verified; 482 zeros excluded (population = positive recorded half-lives); labels are ≥2-replicate means; binder-enriched pool; near-sequence grouping only exact.
+
+### Results
+
+- **Pilots** (dev only): A*02:01 RMSE 1.066→0.846 vs ~1.10 constant (`results/pilot_a0201/`); 10-allele 1.017→0.898 vs ~1.07 (`results/pilot_all_alleles/`). Partitions live in `results/pilot_all_alleles/partitioned_data.csv` (pool 3,457 / dev 1,188 / final test 1,170) — **reuse these; final test was never evaluated**.
+- **Embeddings**: `facebook/esm2_t33_650M_UR50D`, frozen, mean-pool last hidden layer; pair feature = concat(peptide, mhc full-length heavy chain from SPEARMINT files; canonical A*02:01 variant). Generated once on Modal T4 (~24 s, ~$0.01) via `scripts/modal_embed.py`; cached at `data/processed/embeddings_esm2.npz` + meta.
+- **Predictor comparison** (`results/predictor_comparison/`): one-hot + Ridge(alpha=10) beat ESM-2 + Ridge(alpha=10) at every budget (0.912 vs 1.115 at 2,076). Diagnostic: alpha=10 is mis-scaled for 2,560-dim embeddings; `RidgeCV(LOO)` recovers to ~0.93 — still slightly behind one-hot. Mean-pooling plausibly erases positional anchor signal.
+- **Three-policy comparison** (`results/policy_comparison/`, design in `design.json`): identical `RidgeCV` on standardized ESM-2 pair features; matched init 173, batch 173, budgets →2,076; 10 seeds. **Negative**: AULC random 1.073, embdiv 1.086, seqdiv 1.089; random best at every budget; diversity won 0/10 seeds.
+- **Sensitivity** (`results/sensitivity/`): only 2.0% of dev peptides have a ≥90%-identity pool neighbour; stratified dev RMSE (<70–80% identity to acquired set) leaves ranking unchanged — not leakage-driven.
+
+### Environment
+
+- `.venv` (uv): pandas 3.0.6, sklearn 1.9.1, numpy 2.4.6, torch 2.14.1, transformers 5.18.0, modal. Run scripts with `.venv/bin/python`.
+- Modal: authenticated, workspace `tnberkec`, payment method on file; GPU works. `scripts/modal_embed.py` has `::benchmark` and `::full` entrypoints (`--device gpu|cpu`).
+- HF_TOKEN lives in `~/.env` (read by `modal_embed.py`).
+
+### Open next steps (suggested, not started)
+
+1. Uncertainty policy: bootstrap-ensemble or GP regression on the same ESM-2 features, identical partitions/budgets — distinguishes "diversity fails" from "ESM-2 features fail".
+2. Density-weighted diversity (cluster-then-uncertainty) to fix the outlier-grabbing failure.
+3. Alternative pair representations (e.g., per-residue pooling, ESM-2 on peptide+MHC complex) — one-hot already beats current features, so predictor strength bounds what any policy can show.
+4. Final-test evaluation ONLY after the acquisition design is locked on dev.
+5. Optional demo after science (`modal_embed.py` shows the Modal pattern).
+
+---
 
 ## 1. Purpose and agreed direction
 
@@ -290,19 +327,19 @@ Report counts retained/excluded and reasons, the source population, model proven
 
 Success is evidence of improved retrospective label efficiency, not proof of laboratory cost savings or clinical utility. A demo is optional after the science works.
 
-## 11. Immediate deliverables for the next agent
+## 11. Deliverables status
 
-Completed: the corrected screening audit and its verified outputs. Remaining:
+All items below are DONE as of session 2 (2026-10-03):
 
-1. Source-supported review of the main candidate subset, with per-source protocol/temperature evidence and per-row disposition.
-2. Reproducible preparation code and a source manifest. Suggested layout: scripts/, data/processed/, reports/, and results/ inside the workspace, respecting any existing project structure.
-3. Explicit overlap/provenance report. Do not add duplicate IEDB/Rasmussen labels to the acquisition budget or use a stability-trained checkpoint as if its labels were hidden.
-4. A reviewed dataset and split manifest, retaining assay IDs, reference IDs, original units/values, modification annotations, and exclusion reasons.
-5. Cheap development learning curves with multiple seeds, a constant baseline, and an untouched final-test partition. A reasonable starting configuration follows Section 10E.
-6. A proceed/narrow/change-direction decision grounded in the results. A negative pilot is a finding, not a reason to fabricate success or silently change the test set.
-7. If supported, frozen embeddings and the random/sequence-diversity/embedding-diversity acquisition comparison, plus a short report of results and limitations.
+1. ~~Source-supported review~~ → `reports/source_review.md`; all 10 reference pages fetched, identical SPA abstract; 37 °C protocol-derived.
+2. ~~Preparation code + manifest~~ → `scripts/prepare_dataset.py`, `reconcile_audit.py`; `data/manifests/`.
+3. ~~Overlap/provenance report~~ → `scripts/overlap_report.py`, `reports/overlap_report.json`. SPEARMINT stability checkpoint confirmed unusable.
+4. ~~Reviewed dataset + split manifest~~ → `data/processed/eligible_records.csv`, `excluded_records.csv`; `results/*/partitioned_data.csv`.
+5. ~~Cheap dev learning curves~~ → `results/pilot_a0201/`, `results/pilot_all_alleles/`; both beat constant baseline.
+6. ~~Proceed/narrow decision~~ → PROCEED was taken; AL comparison ran.
+7. ~~Embeddings + three-policy comparison~~ → `results/policy_comparison/`, `reports/al_comparison.md`. **Negative result**: random beat both diversity policies everywhere.
 
-Current status: candidate identification and screening correction are complete. Source-level eligibility review, model provenance, dataset preparation, and pilot evaluation remain. The user wants Codex CLI to carry this work forward.
+Remaining / next (see Section 0 "Open next steps"): uncertainty- or density-weighted acquisition, possibly a better pair representation, then a locked-design final-test evaluation. A demo is optional after the science.
 
 ## 12. Useful sources
 
