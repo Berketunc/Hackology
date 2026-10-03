@@ -1,0 +1,12 @@
+{
+  "k": 5,
+  "seed": 0,
+  "splitter": "GroupKFold(shuffle=True)",
+  "groups": [
+    "peptide",
+    "allele"
+  ],
+  "exclusion": "allele contains literal (",
+  "zeros": "retained",
+  "dataset_sha256": "17c574c2c6d2746a238804bd73fa05279ae23e476be5df124dc084e116635658"
+}

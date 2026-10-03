@@ -105,24 +105,32 @@ def audit(args):
     data, total, malformed = read_iedb(args.input)
     if data.empty:
         raise ValueError("No human HLA-I half-life records found.")
+    data = data.fillna("").copy()
 
     values = pd.to_numeric(data["measurement_raw"], errors="coerce")
     factors = data["units"].str.lower().map({
-        "min": 1 / 60,
-        "minute": 1 / 60,
-        "minutes": 1 / 60,
-        "h": 1,
-        "hr": 1,
-        "hrs": 1,
-        "hour": 1,
-        "hours": 1,
-        "s": 1 / 3600,
-        "sec": 1 / 3600,
-        "seconds": 1 / 3600,
+        "min": 1 / 60, "minute": 1 / 60, "minutes": 1 / 60,
+        "h": 1, "hr": 1, "hrs": 1, "hour": 1, "hours": 1,
+        "s": 1 / 3600, "sec": 1 / 3600,
+        "second": 1 / 3600, "seconds": 1 / 3600,
     })
-
     data["half_life_hours_raw"] = values * factors
-    data["comment_needs_review"] = data["comments"].str.contains(
+
+    # This EXACT comment describes replicate count, not a label bound.
+    known_comment = (
+        "pMHC-I complex stability was determined by a scintillation "
+        "proximity based pMHC-I dissociation assay (PMID 21044632). "
+        "The half life reported is an average of at least two "
+        "independent experiments."
+    )
+    data["known_replicate_comment"] = data["comments"].eq(known_comment)
+
+    # Preserve original comments. Exempt only a complete exact match;
+    # additional text or other comments still receive the normal screen.
+    screened_comments = data["comments"].mask(
+        data["known_replicate_comment"], ""
+    )
+    data["comment_needs_review"] = screened_comments.str.contains(
         COMMENT_FLAG, na=False
     )
     data["canonical_peptide"] = data["peptide"].str.fullmatch(
@@ -139,14 +147,14 @@ def audit(args):
     def flags(row):
         problems = []
         value = row["half_life_hours_raw"]
-
         if pd.isna(value):
             problems.append("missing_number_or_unknown_unit")
+        elif not np.isfinite(value):
+            problems.append("nonfinite_value")
         elif value < 0:
             problems.append("negative_value")
         elif value == 0:
             problems.append("zero_needs_interpretation")
-
         if row["inequality"] != "=":
             problems.append("not_explicitly_exact")
         if row["comment_needs_review"]:
@@ -157,12 +165,11 @@ def audit(args):
             problems.append("allele_needs_review")
         if row["has_modification"]:
             problems.append("modified_peptide")
-
         return ";".join(problems)
 
     data["flags"] = data.apply(flags, axis=1)
 
-    # Blank fields are intentional. Do not invent temperature or approval.
+    # Passing the screen is NOT scientific approval.
     data["approved"] = False
     data["temperature_C"] = np.nan
     data["protocol_id"] = ""
@@ -170,52 +177,64 @@ def audit(args):
     data["review_evidence"] = ""
 
     data.to_csv(out / "records_for_review.csv", index=False)
-
-    (
-        data.groupby(["assay", "reference_id", "pmid"], dropna=False)
+    group_keys = ["assay", "reference_id", "pmid"]
+    counts = (
+        data.groupby(group_keys, dropna=False)
         .agg(
             rows=("assay_id", "size"),
             numerical_rows=("half_life_hours_raw", "count"),
             peptides=("peptide", "nunique"),
             alleles=("allele", "nunique"),
+            no_automatic_flags=("flags", lambda s: int(s.eq("").sum())),
         )
         .reset_index()
-        .to_csv(out / "counts_by_assay_and_study.csv", index=False)
     )
+    counts.to_csv(out / "counts_by_assay_and_study.csv", index=False)
 
-    numeric = data.loc[data["half_life_hours_raw"].notna()].copy()
+    numeric = data.loc[
+        np.isfinite(data["half_life_hours_raw"])
+    ].copy()
     pair_columns = [
         "allele", "peptide", "modifications", "modified_residues"
     ]
     method_counts = numeric.groupby(pair_columns)["assay"].nunique()
-
     duplicates = data[data.duplicated("assay_id", keep=False)]
     duplicates.to_csv(out / "duplicate_assay_ids.csv", index=False)
 
+    known_positive = (
+        data["known_replicate_comment"]
+        & data["flags"].eq("")
+        & data["half_life_hours_raw"].gt(0)
+    )
     report = {
         "input_rows": total,
         "malformed_rows_skipped": malformed,
         "human_hla_i_half_life_rows": len(data),
-        "numerical_values_with_known_units": int(
-            data["half_life_hours_raw"].notna().sum()
-        ),
+        "numerical_values_with_known_units": int(len(numeric)),
         "zero_values": int(data["half_life_hours_raw"].eq(0).sum()),
+        "known_replicate_comment_rows": int(
+            data["known_replicate_comment"].sum()
+        ),
         "comments_flagged": int(data["comment_needs_review"].sum()),
         "no_automatic_flags_not_yet_verified": int(
             data["flags"].eq("").sum()
         ),
+        "known_replicate_comment_positive_candidates": int(
+            known_positive.sum()
+        ),
         "distinct_pair_modification_groups": len(method_counts),
         "groups_with_multiple_methods": int(method_counts.gt(1).sum()),
+        "duplicate_assay_id_rows": len(duplicates),
         "assay_counts": data["assay"].value_counts().to_dict(),
         "units": data["units"].value_counts(dropna=False).to_dict(),
         "temperature_verified": False,
         "checkpoint_training_overlap_audited": False,
         "sufficiency_verdict": "NOT YET ESTABLISHED",
     }
-
     save_json(out / "audit_summary.json", report)
     print(json.dumps(report, indent=2))
     print(f"\nReview file: {out / 'records_for_review.csv'}")
+    return report
 
 
 def features(data):

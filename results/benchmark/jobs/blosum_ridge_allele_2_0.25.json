@@ -1,0 +1,12 @@
+{
+  "arm": "blosum_ridge",
+  "split_regime": "allele",
+  "fold": 2,
+  "fraction": 0.25,
+  "n_train": 5352,
+  "fit_predict_cpu_wall_seconds": 0.3507580409932416,
+  "alpha": 1.0,
+  "best_epoch": null,
+  "seed": 2,
+  "training_row_ids_sha256": "8c0e372de3cbec6408779f403797f9ab549f968deb559333865b10010233b0fe"
+}

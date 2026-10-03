@@ -1,0 +1,19 @@
+{
+  "source_file": "rasmussen_et_al_dataset.csv",
+  "sha256": "17c574c2c6d2746a238804bd73fa05279ae23e476be5df124dc084e116635658",
+  "rows": 28166,
+  "alleles": 75,
+  "peptides": 5633,
+  "zeros": 5679,
+  "engineered_rows": 1135,
+  "engineered_alleles": [
+    "HLA-B*14:01(C67S)",
+    "HLA-B*14:02(C67S)",
+    "HLA-B*39:06(C67S)"
+  ],
+  "main_rows": 27031,
+  "main_zeros": 4711,
+  "zero_policy": "Retained as exact recorded zero; possible left censoring.",
+  "source_url": "https://docs.google.com/spreadsheets/d/1NtZNvcF3u0KFn-1bbuA50CF3IXvs1l4HfbaR3KRLvso/edit",
+  "processed_sha256": "3c4bff303ea3c5b2f022034b9d8b91109f8ec0aaa6681f4b99b7a3d7193fe04a"
+}

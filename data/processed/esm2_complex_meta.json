@@ -1,0 +1,132 @@
+{
+  "checkpoint": "facebook/esm2_t33_650M_UR50D",
+  "hidden_size": 1280,
+  "feature_dimension": 11520,
+  "rows": 27031,
+  "frozen": true,
+  "dtype": "float16 inference; float32 output",
+  "pooling": "concatenated 9 peptide hidden states",
+  "hla_input": "34-residue pseudosequence",
+  "linker": "GGGG",
+  "dataset_sha256": "17c574c2c6d2746a238804bd73fa05279ae23e476be5df124dc084e116635658",
+  "gpu_seconds": 83.88443583000006,
+  "inference_seconds": 80.08804488000001,
+  "peak_gpu_memory_bytes": 1481658368,
+  "local_wall_seconds": 252.43633833300555,
+  "hardware": "NVIDIA L4",
+  "batches": [
+    {
+      "gpu_seconds": 14.209694178,
+      "inference_seconds": 10.414556699,
+      "model_load_seconds": 3.795137478999999,
+      "peak_gpu_memory_bytes": 1481658368,
+      "device": "NVIDIA L4",
+      "sequences": 2048
+    },
+    {
+      "gpu_seconds": 5.648135392,
+      "inference_seconds": 5.648058104,
+      "model_load_seconds": 7.728799999995317e-05,
+      "peak_gpu_memory_bytes": 1481658368,
+      "device": "NVIDIA L4",
+      "sequences": 2048
+    },
+    {
+      "gpu_seconds": 5.666755893000001,
+      "inference_seconds": 5.666682678000001,
+      "model_load_seconds": 7.321500000045944e-05,
+      "peak_gpu_memory_bytes": 1481658368,
+      "device": "NVIDIA L4",
+      "sequences": 2048
+    },
+    {
+      "gpu_seconds": 5.689331815999992,
+      "inference_seconds": 5.689070518999998,
+      "model_load_seconds": 0.00026129699999444256,
+      "peak_gpu_memory_bytes": 1481658368,
+      "device": "NVIDIA L4",
+      "sequences": 2048
+    },
+    {
+      "gpu_seconds": 5.693633730000002,
+      "inference_seconds": 5.693568364000001,
+      "model_load_seconds": 6.536600000117687e-05,
+      "peak_gpu_memory_bytes": 1481658368,
+      "device": "NVIDIA L4",
+      "sequences": 2048
+    },
+    {
+      "gpu_seconds": 5.721342226999994,
+      "inference_seconds": 5.7212732149999965,
+      "model_load_seconds": 6.901199999731489e-05,
+      "peak_gpu_memory_bytes": 1481658368,
+      "device": "NVIDIA L4",
+      "sequences": 2048
+    },
+    {
+      "gpu_seconds": 5.729687076999994,
+      "inference_seconds": 5.729620845999989,
+      "model_load_seconds": 6.623100000524573e-05,
+      "peak_gpu_memory_bytes": 1481658368,
+      "device": "NVIDIA L4",
+      "sequences": 2048
+    },
+    {
+      "gpu_seconds": 5.731061274000012,
+      "inference_seconds": 5.730962269999992,
+      "model_load_seconds": 9.900400002038623e-05,
+      "peak_gpu_memory_bytes": 1481658368,
+      "device": "NVIDIA L4",
+      "sequences": 2048
+    },
+    {
+      "gpu_seconds": 5.741350787000016,
+      "inference_seconds": 5.741287408000005,
+      "model_load_seconds": 6.337900001085472e-05,
+      "peak_gpu_memory_bytes": 1481658368,
+      "device": "NVIDIA L4",
+      "sequences": 2048
+    },
+    {
+      "gpu_seconds": 5.7301413610000225,
+      "inference_seconds": 5.7300788400000044,
+      "model_load_seconds": 6.252100001802319e-05,
+      "peak_gpu_memory_bytes": 1481658368,
+      "device": "NVIDIA L4",
+      "sequences": 2048
+    },
+    {
+      "gpu_seconds": 5.729623916000008,
+      "inference_seconds": 5.729560487000015,
+      "model_load_seconds": 6.342899999367546e-05,
+      "peak_gpu_memory_bytes": 1481658368,
+      "device": "NVIDIA L4",
+      "sequences": 2048
+    },
+    {
+      "gpu_seconds": 5.739018020000003,
+      "inference_seconds": 5.738790193,
+      "model_load_seconds": 0.00022782700000334444,
+      "peak_gpu_memory_bytes": 1481658368,
+      "device": "NVIDIA L4",
+      "sequences": 2048
+    },
+    {
+      "gpu_seconds": 5.7324150110000005,
+      "inference_seconds": 5.7323509830000035,
+      "model_load_seconds": 6.402799999705167e-05,
+      "peak_gpu_memory_bytes": 1481658368,
+      "device": "NVIDIA L4",
+      "sequences": 2048
+    },
+    {
+      "gpu_seconds": 1.1222451480000188,
+      "inference_seconds": 1.1221842740000056,
+      "model_load_seconds": 6.08740000132002e-05,
+      "peak_gpu_memory_bytes": 1481658368,
+      "device": "NVIDIA L4",
+      "sequences": 407
+    }
+  ],
+  "cost_scope": "GPU function wall time incl model load; excludes container startup and image build; not a billing total"
+}

@@ -1,0 +1,12 @@
+{
+  "arm": "esm2_complex",
+  "split_regime": "allele",
+  "fold": 0,
+  "fraction": 0.25,
+  "n_train": 5719,
+  "fit_predict_cpu_wall_seconds": 3.361176542006433,
+  "alpha": 10000.0,
+  "best_epoch": null,
+  "seed": 0,
+  "training_row_ids_sha256": "9f7b03972ef38098d22f3ada6e3afe67e6cb45b7248380cecabe90b508090908"
+}

@@ -19,6 +19,10 @@ are used in preprocessing.
 
 import json
 from pathlib import Path
+import sys
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+from src.config import ROOT, DATA, RESULTS, REPORTS
+from src.features import validate_legacy_cache
 
 import numpy as np
 import pandas as pd
@@ -27,7 +31,7 @@ from sklearn.linear_model import Ridge
 from sklearn.metrics import mean_squared_error
 from sklearn.preprocessing import StandardScaler
 
-WS = Path("/Users/berketunc/Hackology")
+WS = ROOT
 PARTITIONS = WS / "results" / "pilot_all_alleles" / "partitioned_data.csv"
 EMB = WS / "data" / "processed" / "embeddings_esm2.npz"
 OUT = WS / "results" / "predictor_comparison"
@@ -62,10 +66,12 @@ def main():
 
     # --- one-hot representation (as in the pilot) ---
     vec = DictVectorizer(sparse=True)
-    x_all_oh = vec.fit_transform(onehot_dicts(data))
+    vec.fit(onehot_dicts(data.loc[pool]))
+    x_all_oh = vec.transform(onehot_dicts(data))
     x_pool_oh, x_dev_oh = x_all_oh[pool], x_all_oh[dev]
 
     # --- ESM-2 pair representation: concat(peptide, mhc) ---
+    validate_legacy_cache()
     emb = np.load(EMB, allow_pickle=False)
     pep_lookup = dict(zip(emb["peptides"].tolist(), emb["peptide_emb"]))
     mhc_lookup = dict(zip(emb["alleles"].tolist(), emb["mhc_emb"]))

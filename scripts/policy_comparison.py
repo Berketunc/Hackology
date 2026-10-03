@@ -29,6 +29,10 @@ Predefined design (locked before running):
 import json
 import time
 from pathlib import Path
+import sys
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+from src.config import ROOT, DATA, RESULTS, REPORTS
+from src.features import validate_legacy_cache
 
 import numpy as np
 import pandas as pd
@@ -38,7 +42,7 @@ from sklearn.linear_model import RidgeCV
 from sklearn.metrics import mean_squared_error
 from sklearn.preprocessing import StandardScaler
 
-WS = Path("/Users/berketunc/Hackology")
+WS = ROOT
 PARTITIONS = WS / "results" / "pilot_all_alleles" / "partitioned_data.csv"
 EMB = WS / "data" / "processed" / "embeddings_esm2.npz"
 OUT = WS / "results" / "policy_comparison"
@@ -93,6 +97,7 @@ def main():
     y_dev = np.log1p(data["hours"].to_numpy()[dev])
 
     # Predictor features: ESM-2 pair space (all policies).
+    validate_legacy_cache()
     emb = np.load(EMB, allow_pickle=False)
     pep_lookup = dict(zip(emb["peptides"].tolist(), emb["peptide_emb"]))
     mhc_lookup = dict(zip(emb["alleles"].tolist(), emb["mhc_emb"]))
@@ -106,7 +111,7 @@ def main():
 
     # Acquisition spaces.
     vec = DictVectorizer(sparse=False)
-    seq_space = vec.fit_transform(onehot_dicts(data))[pool]
+    seq_space = vec.fit_transform(onehot_dicts(data.iloc[pool]))
     emb_space = x_pool  # standardized ESM-2 pair features
 
     rng_time = time.time()

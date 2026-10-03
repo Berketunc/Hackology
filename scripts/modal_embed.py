@@ -19,10 +19,13 @@ layer. Pair feature downstream = concat(peptide_emb, mhc_emb).
 import json
 import time
 from pathlib import Path
+import sys
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+from src.config import ROOT, DATA, RESULTS, REPORTS
 
 import modal
 
-WS = Path("/Users/berketunc/Hackology")
+WS = ROOT
 CHECKPOINT = "facebook/esm2_t33_650M_UR50D"
 GPU = "T4"
 
@@ -162,6 +165,7 @@ def full(device="cpu"):
     )
     meta = {
         "checkpoint": CHECKPOINT,
+        "hidden_size": results[0]["hidden_size"],
         "pooling": "mean over residue tokens (BOS/EOS excluded), "
                    "last hidden layer",
         "frozen": True,

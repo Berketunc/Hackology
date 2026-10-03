@@ -8,11 +8,14 @@ Does not modify any input file.
 import json
 import sys
 from pathlib import Path
+import sys
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+from src.config import ROOT, DATA, RESULTS, REPORTS
 
 import numpy as np
 import pandas as pd
 
-DOWNLOADS = Path("/Users/berketunc/Downloads")
+DOWNLOADS = Path.home() / "Downloads"
 RECORDS = DOWNLOADS / "records_for_review 2.csv"
 SUMMARY = DOWNLOADS / "audit_summary 2.json"
 

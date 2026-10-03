@@ -1,0 +1,12 @@
+{
+  "arm": "esm2_mean",
+  "split_regime": "peptide",
+  "fold": 4,
+  "fraction": 0.5,
+  "n_train": 10820,
+  "fit_predict_cpu_wall_seconds": 0.8605560419964604,
+  "alpha": 1000.0,
+  "best_epoch": null,
+  "seed": 4,
+  "training_row_ids_sha256": "b5b75ab3cb67f95372c3bfa8d403f8a37accdf6b125cba0f005eb0eca058fa0f"
+}

@@ -23,11 +23,14 @@ import hashlib
 import json
 from datetime import datetime, timezone
 from pathlib import Path
+import sys
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+from src.config import ROOT, DATA, RESULTS, REPORTS
 
 import pandas as pd
 
-DOWNLOADS = Path("/Users/berketunc/Downloads")
-WORKSPACE = Path("/Users/berketunc/Hackology")
+DOWNLOADS = Path.home() / "Downloads"
+WORKSPACE = ROOT
 RECORDS = DOWNLOADS / "records_for_review 2.csv"
 
 KNOWN_COMMENT = (

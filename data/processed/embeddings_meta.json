@@ -39,5 +39,6 @@
   "mhc_sequence_source": "spearmint_uq_train.csv",
   "a0201_variant": "canonical (variant 0); engineered K90A/E87Q variants excluded",
   "peptide_embed_worker_seconds_total": 24.30182147026062,
-  "peak_gpu_mem_gb": 2.784511488
+  "peak_gpu_mem_gb": 2.784511488,
+  "hidden_size": 1280
 }

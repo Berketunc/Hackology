@@ -1,0 +1,44 @@
+{
+  "checkpoint": "facebook/esm2_t33_650M_UR50D",
+  "hidden_size": 1280,
+  "feature_dimension": 2560,
+  "rows": 27031,
+  "frozen": true,
+  "dtype": "float16 inference; float32 output",
+  "pooling": "residue mean",
+  "hla_input": "34-residue pseudosequence",
+  "linker": null,
+  "dataset_sha256": "17c574c2c6d2746a238804bd73fa05279ae23e476be5df124dc084e116635658",
+  "gpu_seconds": 23.399144039999996,
+  "inference_seconds": 9.161934585999997,
+  "peak_gpu_memory_bytes": 1431627264,
+  "local_wall_seconds": 57.28742649999913,
+  "hardware": "NVIDIA L4",
+  "batches": [
+    {
+      "gpu_seconds": 20.525334812000004,
+      "inference_seconds": 6.288291592000004,
+      "model_load_seconds": 14.237043219999999,
+      "peak_gpu_memory_bytes": 1349789184,
+      "device": "NVIDIA L4",
+      "sequences": 2048
+    },
+    {
+      "gpu_seconds": 1.389488692999997,
+      "inference_seconds": 1.3893969379999973,
+      "model_load_seconds": 9.175499999969361e-05,
+      "peak_gpu_memory_bytes": 1349789184,
+      "device": "NVIDIA L4",
+      "sequences": 2048
+    },
+    {
+      "gpu_seconds": 1.4843205349999948,
+      "inference_seconds": 1.4842460559999964,
+      "model_load_seconds": 7.447899999846186e-05,
+      "peak_gpu_memory_bytes": 1431627264,
+      "device": "NVIDIA L4",
+      "sequences": 1609
+    }
+  ],
+  "cost_scope": "GPU function wall time incl model load; excludes container startup and image build; not a billing total"
+}

@@ -1,2 +1,14 @@
-*.csv
 .env
+.env.*
+__pycache__/
+*.py[cod]
+.DS_Store
+.venv/
+.pytest_cache/
+/cache/
+/mhc_ligand_full.csv
+/data/external/*.csv
+/data/processed/*.npy
+/data/processed/*.npz
+/results/models/
+/results/**/*.log

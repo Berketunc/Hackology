@@ -1,0 +1,15 @@
+{
+  "split_seed": 0,
+  "model_seeds": [
+    0,
+    1,
+    2,
+    3,
+    4
+  ],
+  "subsample_seed_rule": "default_rng(outer fold number)",
+  "nn_validation_seed_rule": "outer fold number",
+  "pca_seed_rule": "outer fold number",
+  "timing": "Post-run metadata clarification of seed schedule already fixed in source before fitting; no changed fits or split choices.",
+  "subset_rule": "Nested row permutations; full-budget order uses all original training rows."
+}

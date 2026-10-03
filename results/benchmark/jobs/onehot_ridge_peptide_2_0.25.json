@@ -1,0 +1,12 @@
+{
+  "arm": "onehot_ridge",
+  "split_regime": "peptide",
+  "fold": 2,
+  "fraction": 0.25,
+  "n_train": 5376,
+  "fit_predict_cpu_wall_seconds": 1.4700987499963958,
+  "alpha": 100.0,
+  "best_epoch": null,
+  "seed": 2,
+  "training_row_ids_sha256": "668beb7d6676b8ab6263116e0f668a44827e322645b3c50030107dc68ec03df1"
+}

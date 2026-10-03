@@ -1,0 +1,1 @@
+assay_id,reference_id,pmid,paper_title,peptide,modifications,modified_residues,allele,mhc_class,assay,response,units,measurement_raw,inequality,comments,half_life_hours_raw,known_replicate_comment,comment_needs_review,canonical_peptide,resolved_standard_hla,has_modification,flags,approved,temperature_C,protocol_id,half_life_hours,review_evidence

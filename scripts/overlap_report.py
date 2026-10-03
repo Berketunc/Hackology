@@ -11,12 +11,15 @@ candidate subset's relationship to the Rasmussen dataset.
 
 import json
 from pathlib import Path
+import sys
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+from src.config import ROOT, DATA, RESULTS, REPORTS
 
 import pandas as pd
 
-EXT = Path("/Users/berketunc/Hackology/data/external")
-PROC = Path("/Users/berketunc/Hackology/data/processed")
-REPORTS = Path("/Users/berketunc/Hackology/reports")
+EXT = DATA / "external"
+PROC = DATA / "processed"
+
 
 
 def pairs(df, allele_col, pep_col):
