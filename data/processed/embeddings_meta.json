@@ -1,0 +1,43 @@
+{
+  "checkpoint": "facebook/esm2_t33_650M_UR50D",
+  "pooling": "mean over residue tokens (BOS/EOS excluded), last hidden layer",
+  "frozen": true,
+  "infra": "Modal gpu (Tesla T4, 1 workers)",
+  "peptides": 4268,
+  "alleles": {
+    "HLA-A*01:01": {
+      "length": 365
+    },
+    "HLA-A*02:01": {
+      "length": 365
+    },
+    "HLA-A*03:01": {
+      "length": 365
+    },
+    "HLA-A*11:01": {
+      "length": 365
+    },
+    "HLA-A*24:02": {
+      "length": 365
+    },
+    "HLA-A*26:01": {
+      "length": 365
+    },
+    "HLA-B*07:02": {
+      "length": 362
+    },
+    "HLA-B*15:01": {
+      "length": 362
+    },
+    "HLA-B*35:01": {
+      "length": 362
+    },
+    "HLA-B*40:01": {
+      "length": 362
+    }
+  },
+  "mhc_sequence_source": "spearmint_uq_train.csv",
+  "a0201_variant": "canonical (variant 0); engineered K90A/E87Q variants excluded",
+  "peptide_embed_worker_seconds_total": 24.30182147026062,
+  "peak_gpu_mem_gb": 2.784511488
+}

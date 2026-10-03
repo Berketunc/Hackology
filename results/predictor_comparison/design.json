@@ -1,0 +1,32 @@
+{
+  "design": "matched random acquisition; identical Ridge(alpha=10,lsqr) for both representations",
+  "budgets": [
+    173,
+    346,
+    519,
+    692,
+    865,
+    1038,
+    1211,
+    1384,
+    1557,
+    1728,
+    1903,
+    2076
+  ],
+  "seeds": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9
+  ],
+  "primary_metric": "development RMSE in log1p(hours)",
+  "partitions": "/Users/berketunc/Hackology/results/pilot_all_alleles/partitioned_data.csv",
+  "final_test_evaluated": false
+}
