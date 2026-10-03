@@ -117,10 +117,10 @@ def predict(peptide,allele):
         low,high=np.expm1(np.maximum(0,[min(predictions),max(predictions)]))
         tier='≥6 h' if hours>=6 else '2–6 h' if hours>=2 else '<2 h'
         labels={'blosum_nn':'BLOSUM MLP (reference)','blosum_ridge':'BLOSUM Ridge','onehot_ridge':'Allele-ID Ridge (floor)','esm2_mean':'ESM-2 independent mean','esm2_joint':'ESM-2 joint sequence encoding'}
-        output.append([labels[arm],round(hours,2),f'{low:.2f}–{high:.2f}',tier,allele_train_count])
+        output.append([labels[arm],round(hours,2),'Not calibrated',f'{low:.2f}–{high:.2f}',tier,allele_train_count,'—'])
     info=(f'### {allele} · {peptide}\n\n**{int(counts[allele])} recorded measurements in this dataset** for this allele. '
           f'Nearest better-measured neighbour: {nearest}\n\n'
-          +('Central predictions come from the fold that held this peptide out. ' if known else 'Novel-pair predictions average five fitted models. ')
+          +('For the original benchmark arms, central predictions come from the fold that held this peptide out. ' if known else 'For the original benchmark arms, novel-pair predictions average five fitted models. ')
           +'The range is the minimum–maximum across five peptide-CV fits, **not a calibrated confidence interval**. '
           +('Four fits can include this measured pair; their spread is only a model-sensitivity diagnostic. ' if known else '')
           +'Training counts refer to available outer-fold rows; the neural model reserves 15% of training groups for early stopping. Negative log-scale outputs are clipped to zero hours for display only.\n\n'
@@ -132,7 +132,37 @@ def predict(peptide,allele):
     if zero_fraction>=.5:
         info+='At least half of its measurements are zero; consult tier-AUC alongside ranking correlation in the benchmark report. '
     info+='Dataset measurement counts do not describe human population representation.'
-    return info,pd.DataFrame(output,columns=['Arm','Predicted half-life (h)','Five-fit range (h)','Tier','Allele rows in training fold'])
+    from .conformal import predict_interval
+    interval=predict_interval(peptide,allele,df)
+    if interval is not None:
+        hours=interval['center']
+        tier='≥6 h' if hours>=6 else '2–6 h' if hours>=2 else '<2 h'
+        available=interval['status']=='available'
+        display=(f"{interval['low']:.2f}–{interval['high']:.2f}" if available
+                 else 'Unavailable: unseen allele' if interval['status']=='unseen_allele'
+                 else 'Insufficient calibration data')
+        output.insert(0,['BLOSUM MLP · calibrated fit',round(hours,2),display,'—',tier,
+                         interval['n_train'],interval['n_calibration']])
+        info+=('\n\n### Calibrated baseline uncertainty\n\n'
+               'The calibrated fit reserves separate peptides for calibration, so its point prediction can differ from the benchmark MLP. '
+               'This peptide was excluded from both fitting and calibration. '
+               f"Calibration uses **{interval['n_calibration']} distinct peptides for this allele**. ")
+        if available:
+            info+=(f"**95% target prediction interval: {display} hours.** "
+                   f"This fold covered {interval['test_coverage']:.1%} of {interval['n_test_finite']:,} held-out measurements with finite intervals. ")
+            if interval['n_calibration']<50:
+                info+='Calibration support is small; the interval endpoints may be unstable. '
+        else:
+            info+=('**No finite prediction interval is supported.** Fewer than 19 calibration peptides gives an unbounded upper endpoint at 95%; '
+                   'an allele absent from fitting is outside the supported scope. ')
+        if interval['allele_n_test']:
+            info+=(f"For this allele across the five evaluation folds, finite-interval coverage was {interval['allele_coverage']:.1%} "
+                   f"on {interval['allele_n_test']} measurements. ")
+        info+=('Coverage is a retrospective frequency, not the probability that this individual prediction is correct. '
+               'The 95% target assumes comparable future peptides within the same allele; it does not extend automatically to unseen alleles, '
+               'distribution shifts, or simultaneous coverage of multiple predictions. Other model arms have no calibrated intervals yet.')
+    return info,pd.DataFrame(output,columns=['Arm','Predicted half-life (h)','95% prediction interval (h)',
+                                           'Five-fit range (h)','Tier','Allele rows in training fold','Calibration peptides for allele'])
 
 
 def build_overlap():

@@ -1,0 +1,13 @@
+{
+  "tests_passed": 17,
+  "folds_validated": 5,
+  "predictions": 27031,
+  "fit_calibration_test_peptide_overlap": 0,
+  "scaler_matches_inner_training_only": true,
+  "all_calibration_cutoffs_recomputed": true,
+  "finite_intervals": 26894,
+  "no_finite_interval": 137,
+  "coverage_finite": 0.955863761433777,
+  "design_sha256": "92611ab2fe2fef90fbce4d2c9d0d7b8d5e7d5ae4b08b964fd878a916284cf8fd",
+  "gpu_extraction_required": false
+}

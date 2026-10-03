@@ -63,6 +63,16 @@ The primary figure remains the distance-stratified result, including the locus s
 
 ## Reproduce
 
+### Calibrated prediction intervals
+
+The demo now includes a separate **BLOSUM MLP · calibrated fit** with allele-conditional 95% target prediction intervals. Across five peptide holdouts, finite intervals cover **95.59% of 26,894 measurements**, with median width **12.00 hours**. Another **137 rows** have insufficient calibration support and receive no finite interval. These ranges are often wide; coverage is not certainty about an individual peptide.
+
+Run `python -m src.conformal` and `python -m src.conformal_report` before starting the demo to fit/rebuild the calibrated models. This uses CPU only. Peptides are disjoint across fitting, calibration and evaluation; each allele uses its own finite-sample residual cutoff. Existing benchmark predictions are preserved. Other arms' five-fit ranges remain uncalibrated. Unseen-allele and locus-transfer intervals are not implemented.
+
+See [calibration findings and assumptions](reports/conformal_findings.md) and [coverage results](results/conformal/coverage.csv). The confidence level relies on exchangeability within each allele; it is not a clinical or distribution-shift guarantee.
+
+### Benchmark reproduction
+
 Python 3.11 was used. From the repository root:
 
 ```sh
