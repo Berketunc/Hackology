@@ -20,8 +20,10 @@ import json
 import time
 from pathlib import Path
 import sys
-sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
-from src.config import ROOT, DATA, RESULTS, REPORTS
+sys.path.insert(0, str(Path(__file__).resolve().parents[3]))
+from src.config import ROOT as PROJECT_ROOT
+ROOT = PROJECT_ROOT / 'archive' / 'iedb_pilot'
+DATA, RESULTS, REPORTS = ROOT / 'data', ROOT / 'results', ROOT / 'reports'
 
 import modal
 
@@ -53,7 +55,7 @@ def load_inputs():
                        dtype=str).fillna("")
     peptides = sorted(elig["peptide"].unique())
     train = pd.read_csv(
-        WS / "data" / "external" / "spearmint_uq_train.csv", dtype=str)
+        PROJECT_ROOT / "data" / "external" / "spearmint_uq_train.csv", dtype=str)
     mhc = {}
     for allele in sorted(elig["allele"].unique()):
         seqs = train.loc[train["allele"] == allele,

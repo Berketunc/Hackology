@@ -1,0 +1,1 @@
+Pre-extension v2 documentation and figures. Original result files are recoverable from git checkpoint `4f99482`; paths and claims in this snapshot are historical. Current matched-head findings are in ../../benchmark_findings.md.

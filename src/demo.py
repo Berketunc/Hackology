@@ -136,7 +136,7 @@ def predict(peptide,allele):
 
 
 def build_overlap():
-    from scripts.overlap_report import pairs
+    from archive.iedb_pilot.scripts.overlap_report import pairs
     df=main_data()
     out=df[['allele','peptide']].copy()
     for name in ['uq_train','uq_bs_val','uq_bs_test','uq_s3_train','uq_s3_val','uq_s3_test']:

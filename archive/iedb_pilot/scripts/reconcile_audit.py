@@ -9,8 +9,10 @@ import json
 import sys
 from pathlib import Path
 import sys
-sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
-from src.config import ROOT, DATA, RESULTS, REPORTS
+sys.path.insert(0, str(Path(__file__).resolve().parents[3]))
+from src.config import ROOT as PROJECT_ROOT
+ROOT = PROJECT_ROOT / 'archive' / 'iedb_pilot'
+DATA, RESULTS, REPORTS = ROOT / 'data', ROOT / 'results', ROOT / 'reports'
 
 import numpy as np
 import pandas as pd

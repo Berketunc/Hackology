@@ -14,11 +14,17 @@ from .models import fit_ridge, fit_baseline_nn
 from .evaluate import metrics
 
 OUT = RESULTS / 'benchmark'
-ARMS = ['blosum_nn', 'blosum_ridge', 'onehot_ridge', 'esm2_mean', 'esm2_joint']
+CORE_ARMS = ['blosum_nn', 'blosum_ridge', 'onehot_ridge', 'esm2_mean', 'esm2_joint']
+MLP_EXTENSION = ['esm2_mean_nn', 'esm2_joint_nn']
+ARMS = CORE_ARMS + MLP_EXTENSION
+
+
+def representation_arm(arm):
+    return arm.removesuffix('_nn') if arm.startswith('esm2_') else arm
 
 
 def lock_design():
-    design = dict(seed=0, folds=5, version=2, split_regimes=['peptide', 'allele', 'locus', 'allele_strict'], arms=ARMS,
+    design = dict(seed=0, folds=5, version=2, split_regimes=['peptide', 'allele', 'locus', 'allele_strict'], arms=CORE_ARMS,
         target='log1p(hours)', primary_metric='macro_within_allele_spearman', companion_metric='pooled_spearman',
         minimum_test_rows=20, minimum_distinct_nonzero_half_lives=10, high_zero_fraction=.5,
         reference_baseline='blosum_nn', illustrative_floor='onehot_ridge',
@@ -46,17 +52,39 @@ def lock_design():
         path.write_text(json.dumps(design, indent=2) + '\n')
 
 
+def lock_mlp_extension():
+    """Add a prospective head comparison without rewriting the locked v2 design."""
+    design = dict(version=3, base_design_sha256=hashlib.sha256((OUT/'design.json').read_bytes()).hexdigest(),
+        arms=MLP_EXTENSION, fractions=[1.0], regimes=['peptide','allele','locus','allele_strict'],
+        planned_fits=26, reference='blosum_nn', representation_controls=['esm2_mean','esm2_joint'],
+        head='Same fit_baseline_nn as BLOSUM: 256/64 ReLU, grouped inner validation, no PCA',
+        seed_schedule='outer fold; unchanged training rows and split assignments',
+        embedding_policy='Reuse validated mean/joint caches; no new GPU extraction for extension',
+        scope='Post-v2 matched-head follow-up; full-budget only; no parameter-count parity claim',
+        primary_metric='macro_within_allele_spearman',
+        inference='Five-fold paired t for primary regimes; locus descriptive; strict paired-allele bootstrap')
+    path=OUT/'mlp_extension_design.json'
+    if path.exists():
+        assert json.loads(path.read_text()) == design, 'Locked MLP extension design differs'
+    else:
+        path.write_text(json.dumps(design, indent=2)+'\n')
+
+
 def run(arms, fractions=(1.0,), regimes=('peptide','allele','locus','allele_strict')):
     df = prepare()
     lock_design()
-    missing = [arm for arm in arms if arm.startswith('esm2_') and not embedding_arm_available(arm)]
+    if any(arm in MLP_EXTENSION for arm in arms):
+        lock_mlp_extension()
+        if any(not embedding_arm_available(representation_arm(arm)) for arm in arms if arm in MLP_EXTENSION):
+            raise RuntimeError('MLP extension requires existing ESM-2 feature caches; new GPU extraction is disabled.')
+    missing = [arm for arm in arms if arm.startswith('esm2_') and not embedding_arm_available(representation_arm(arm))]
     if missing:
         from scripts.modal_benchmark_embed import main as extract_embeddings
         extract_embeddings()
     cache = {}
     for arm in arms:
         if arm.startswith('esm2_'):
-            cache[arm] = load_embedding_arm(arm, df)
+            cache[arm] = load_embedding_arm(representation_arm(arm), df)
         elif arm.startswith('blosum'):
             cache[arm] = blosum_pairs(df)
     for regime in regimes:
@@ -65,6 +93,8 @@ def run(arms, fractions=(1.0,), regimes=('peptide','allele','locus','allele_stri
             for fraction in (fractions if regime in ['peptide','allele'] else [1.0]):
                 train = full_train if fraction == 1 else order[:max(10, int(len(order)*fraction))]
                 for arm in arms:
+                    if arm in MLP_EXTENSION and fraction != 1:
+                        continue  # The extension is locked to full-budget fits only.
                     stem = f'{arm}_{regime}_{fold}_{fraction:g}'
                     path = OUT / 'jobs' / f'{stem}.csv'
                     saved_model = RESULTS / 'models' / f'{arm}_{regime}_{fold}.joblib'
@@ -81,7 +111,7 @@ def run(arms, fractions=(1.0,), regimes=('peptide','allele','locus','allele_stri
                     else:
                         xt, xv = np.asarray(cache[arm][train]), np.asarray(cache[arm][test])
                     with threadpool_limits(limits=4):
-                        if arm == 'blosum_nn':
+                        if arm.endswith('_nn'):
                             model = fit_baseline_nn(xt, df.y.iloc[train], seed=fold, groups=df.iloc[train]['peptide' if regime=='peptide' else 'allele'].to_numpy())
                         else:
                             model = fit_ridge(xt, df.y.iloc[train], seed=fold)
@@ -96,7 +126,7 @@ def run(arms, fractions=(1.0,), regimes=('peptide','allele','locus','allele_stri
                                  n_train=len(train), seed=fold,
                                  training_row_ids_sha256=hashlib.sha256(df.index.to_numpy()[train].astype('<i8').tobytes()).hexdigest(),
                                  fit_predict_cpu_wall_seconds=seconds,
-                                 alpha=float(model.named_steps['ridge'].alpha_) if arm != 'blosum_nn' else None,
+                                 alpha=float(model.named_steps['ridge'].alpha_) if not arm.endswith('_nn') else None,
                                  best_epoch=getattr(model, 'best_epoch_', None))
                     (path.with_suffix('.json')).write_text(json.dumps(stats, indent=2))
                     if fraction == 1:
@@ -104,6 +134,7 @@ def run(arms, fractions=(1.0,), regimes=('peptide','allele','locus','allele_stri
                         target.parent.mkdir(parents=True, exist_ok=True)
                         joblib.dump(dict(model=model, encoder=encoder, row_indices=df.index[train].to_numpy()), target)
                     print(metrics(rows.y_true, rows.y_pred, rows.allele), flush=True)
+                    del model, xt, xv  # Release the joint representation's large training tensors between fits.
                     # Summarise once per invocation; full audit is expensive across all budgets.
     aggregate()
 

@@ -1,0 +1,29 @@
+{
+  "version": 3,
+  "base_design_sha256": "ae316ec97e499aa0eb70d23b00f0bae04a5378622f255eb522ec5441cb6b2154",
+  "arms": [
+    "esm2_mean_nn",
+    "esm2_joint_nn"
+  ],
+  "fractions": [
+    1.0
+  ],
+  "regimes": [
+    "peptide",
+    "allele",
+    "locus",
+    "allele_strict"
+  ],
+  "planned_fits": 26,
+  "reference": "blosum_nn",
+  "representation_controls": [
+    "esm2_mean",
+    "esm2_joint"
+  ],
+  "head": "Same fit_baseline_nn as BLOSUM: 256/64 ReLU, grouped inner validation, no PCA",
+  "seed_schedule": "outer fold; unchanged training rows and split assignments",
+  "embedding_policy": "Reuse validated mean/joint caches; no new GPU extraction for extension",
+  "scope": "Post-v2 matched-head follow-up; full-budget only; no parameter-count parity claim",
+  "primary_metric": "macro_within_allele_spearman",
+  "inference": "Five-fold paired t for primary regimes; locus descriptive; strict paired-allele bootstrap"
+}

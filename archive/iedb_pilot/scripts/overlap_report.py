@@ -12,12 +12,14 @@ candidate subset's relationship to the Rasmussen dataset.
 import json
 from pathlib import Path
 import sys
-sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
-from src.config import ROOT, DATA, RESULTS, REPORTS
+sys.path.insert(0, str(Path(__file__).resolve().parents[3]))
+from src.config import ROOT as PROJECT_ROOT
+ROOT = PROJECT_ROOT / 'archive' / 'iedb_pilot'
+DATA, RESULTS, REPORTS = ROOT / 'data', ROOT / 'results', ROOT / 'reports'
 
 import pandas as pd
 
-EXT = DATA / "external"
+EXT = PROJECT_ROOT / "data" / "external"
 PROC = DATA / "processed"
 
 

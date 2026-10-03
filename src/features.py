@@ -26,7 +26,7 @@ def onehot_allele(df, encoder=None):
 
 
 def validate_legacy_cache(path=None):
-    path = path or DATA / 'processed'
+    path = path or DATA.parent / 'archive/iedb_pilot/data/processed'
     meta = json.loads((path / 'embeddings_meta.json').read_text())
     assert meta['checkpoint'] == CHECKPOINT and meta['hidden_size'] == HIDDEN_SIZE
     with np.load(path / 'embeddings_esm2.npz', allow_pickle=False) as cache:

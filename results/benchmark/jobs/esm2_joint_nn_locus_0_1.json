@@ -1,0 +1,12 @@
+{
+  "arm": "esm2_joint_nn",
+  "split_regime": "locus",
+  "fold": 0,
+  "fraction": 1.0,
+  "n_train": 13696,
+  "seed": 0,
+  "training_row_ids_sha256": "98cf3dc827d2ab67d50b8490ea96b84b1681e5fda9c47ac84049883dd34f00c4",
+  "fit_predict_cpu_wall_seconds": 38.049050583998905,
+  "alpha": null,
+  "best_epoch": 45
+}

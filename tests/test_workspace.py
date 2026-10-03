@@ -4,7 +4,7 @@ import pandas as pd
 import pytest
 from fastapi.testclient import TestClient
 from src import workspace as w
-from src.webapp import create_app
+from notes.website.webapp import create_app
 
 
 def test_sequences_and_batch_validation():

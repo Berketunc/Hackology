@@ -1,0 +1,15 @@
+{
+  "passed": true,
+  "base_checkpoint": "4f99482",
+  "new_fits": 26,
+  "total_jobs": 241,
+  "original_jobs_unchanged": 215,
+  "training_hashes_match": true,
+  "test_rows_match": true,
+  "eligibility_matches": true,
+  "alpha_null_and_best_epoch_integer": true,
+  "split_and_v2_design_unchanged": true,
+  "total_full_budget_predictions": 596715,
+  "new_gpu_extraction": false,
+  "scope": "Full-budget only; primary five-fold t intervals; strict paired-allele bootstrap; locus exploratory"
+}

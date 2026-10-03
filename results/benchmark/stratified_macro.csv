@@ -2,50 +2,70 @@ stratifier,band,arm,macro,eligible_alleles,excluded_alleles
 identity_band,<80%,blosum_nn,0.15323949258276517,6,1
 identity_band,<80%,blosum_ridge,0.05486046333632722,6,1
 identity_band,<80%,esm2_joint,0.03992803974666755,6,1
+identity_band,<80%,esm2_joint_nn,0.055214914758097026,6,1
 identity_band,<80%,esm2_mean,-0.00449526242957643,6,1
+identity_band,<80%,esm2_mean_nn,0.10454827592562226,6,1
 identity_band,<80%,onehot_ridge,0.05585758510117602,6,1
 identity_band,80–90%,blosum_nn,0.27556418177472247,15,1
 identity_band,80–90%,blosum_ridge,0.1635127728472231,15,1
 identity_band,80–90%,esm2_joint,0.1059738463605631,15,1
+identity_band,80–90%,esm2_joint_nn,0.13913947844833485,15,1
 identity_band,80–90%,esm2_mean,0.07539161919036724,15,1
+identity_band,80–90%,esm2_mean_nn,0.1401699059117141,15,1
 identity_band,80–90%,onehot_ridge,0.16314608181614362,15,1
 identity_band,90–95%,blosum_nn,0.391450354249153,24,2
 identity_band,90–95%,blosum_ridge,0.2180368104141482,24,2
 identity_band,90–95%,esm2_joint,0.20097859467391754,24,2
+identity_band,90–95%,esm2_joint_nn,0.2787757052613058,24,2
 identity_band,90–95%,esm2_mean,0.1731985847480516,24,2
+identity_band,90–95%,esm2_mean_nn,0.2568786533570536,24,2
 identity_band,90–95%,onehot_ridge,0.21837345565885538,24,2
 identity_band,95–100%,blosum_nn,0.536519192651337,23,0
 identity_band,95–100%,blosum_ridge,0.3287913425145831,23,0
 identity_band,95–100%,esm2_joint,0.27733462564493006,23,0
+identity_band,95–100%,esm2_joint_nn,0.35864018966244143,23,0
 identity_band,95–100%,esm2_mean,0.2463911797218357,23,0
+identity_band,95–100%,esm2_mean_nn,0.3278121634944657,23,0
 identity_band,95–100%,onehot_ridge,0.3288202215144897,23,0
 support_band,1–100,blosum_nn,0.19156877938816916,2,1
 support_band,1–100,blosum_ridge,0.08667234017769834,2,1
 support_band,1–100,esm2_joint,0.05427017782411989,2,1
+support_band,1–100,esm2_joint_nn,0.04146259089181075,2,1
 support_band,1–100,esm2_mean,0.08991236287001196,2,1
+support_band,1–100,esm2_mean_nn,0.06501335594023225,2,1
 support_band,1–100,onehot_ridge,0.08676733683204979,2,1
 support_band,101–500,blosum_nn,0.39169908066454234,45,3
 support_band,101–500,blosum_ridge,0.22642273191669943,45,3
 support_band,101–500,esm2_joint,0.18326448269289128,45,3
+support_band,101–500,esm2_joint_nn,0.234333315196183,45,3
 support_band,101–500,esm2_mean,0.1512798911074067,45,3
+support_band,101–500,esm2_mean_nn,0.2106996588284041,45,3
 support_band,101–500,onehot_ridge,0.22672844357331862,45,3
 support_band,501–1000,blosum_nn,0.329455119553279,15,0
 support_band,501–1000,blosum_ridge,0.18048370713851042,15,0
 support_band,501–1000,esm2_joint,0.14861221925512835,15,0
+support_band,501–1000,esm2_joint_nn,0.21520766682256745,15,0
 support_band,501–1000,esm2_mean,0.1236466761387441,15,0
+support_band,501–1000,esm2_mean_nn,0.2702434902750228,15,0
 support_band,501–1000,onehot_ridge,0.18091908214166594,15,0
 support_band,>1000,blosum_nn,0.6393711055163215,6,0
 support_band,>1000,blosum_ridge,0.4178859128027917,6,0
 support_band,>1000,esm2_joint,0.407788871706765,6,0
+support_band,>1000,esm2_joint_nn,0.5836139309717883,6,0
 support_band,>1000,esm2_mean,0.34759098552983714,6,0
+support_band,>1000,esm2_mean_nn,0.4615736619812414,6,0
 support_band,>1000,onehot_ridge,0.4160106503177629,6,0
 identity_band,Holdout A,blosum_nn,0.05410338912485972,34,2
 identity_band,Holdout A,blosum_ridge,0.09819821382819101,34,2
 identity_band,Holdout A,esm2_joint,0.1254494029776398,34,2
+identity_band,Holdout A,esm2_joint_nn,0.057504481861901165,34,2
 identity_band,Holdout A,esm2_mean,0.07282894031852255,34,2
+identity_band,Holdout A,esm2_mean_nn,0.08442820072063674,34,2
 identity_band,Holdout A,onehot_ridge,0.09835969135255866,34,2
 identity_band,Holdout B,blosum_nn,0.07040499180401116,34,2
 identity_band,Holdout B,blosum_ridge,0.04335434727815836,34,2
 identity_band,Holdout B,esm2_joint,0.09833244354517817,34,2
+identity_band,Holdout B,esm2_joint_nn,0.06320027577851997,34,2
 identity_band,Holdout B,esm2_mean,0.06852662637152251,34,2
+identity_band,Holdout B,esm2_mean_nn,0.05005588877396391,34,2
 identity_band,Holdout B,onehot_ridge,0.044322127197457345,34,2

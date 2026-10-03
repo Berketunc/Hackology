@@ -69,8 +69,9 @@ def test_nn_inner_group_validation_scaler():
 
 def test_corrected_audit_regression(tmp_path, monkeypatch):
     from types import SimpleNamespace
-    import check_stability_data as audit
-    from src.config import DATA
+    from archive.iedb_pilot import check_stability_data as audit
+    from src.config import ROOT
+    DATA = ROOT / 'archive/iedb_pilot/data'
     # Reviewed derivatives preserve all original 10,605 retained records.
     frame=pd.concat([pd.read_csv(DATA/'processed/eligible_records.csv',dtype=str),
                      pd.read_csv(DATA/'processed/excluded_records.csv',dtype=str)],ignore_index=True).fillna('')

@@ -12,3 +12,5 @@ __pycache__/
 /data/processed/*.npz
 /results/models/
 /results/**/*.log
+
+/archive/iedb_pilot/mhc_ligand_full.csv

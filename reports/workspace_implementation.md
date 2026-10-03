@@ -11,3 +11,5 @@ Existing peptides use the appropriate peptide-held-out model, including novel al
 Validation: 17 Python tests pass. Isolated Chromium checks pass for default scan (62 windows × 6 alleles), filtering, heatmap selection, shortlisting, CSV export, saved-run persistence/restoration, five-model prediction, invalid input feedback, CSV upload, batch scoring, shortlist comparison and 390px mobile layout. No JavaScript page errors or horizontal page overflow were observed. Desktop, single-pair and mobile screenshots were inspected. New-sequence ESM-2 downloading was not repeated in this UI verification; cached five-model examples and novel sequence-baseline scans were exercised.
 
 Artifacts: `results/benchmark/workspace_checks.json`, `reports/workspace_desktop.png`, `reports/workspace_single.png`, and `reports/workspace_mobile.png`. The in-app browser connection was unavailable, so browser verification used an isolated headless Chromium installation without touching the user's browser profile.
+
+The matched-head follow-up adds two benchmark-only ESM-2 + MLP approaches. The website continues to expose the original five predictors. Launch code is now in `notes/website/`.

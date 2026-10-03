@@ -37,7 +37,7 @@ def build_app():
 
 
 def build_workspace():
-    from src.webapp import create_app
+    from notes.website.webapp import create_app
     return gr.mount_gradio_app(create_app(), build_app(), path='/legacy')
 
 

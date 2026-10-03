@@ -1,49 +1,80 @@
-# v2 findings: representation benefit depends on the evaluation regime
+# Matched-head findings: representation and fitting procedure both matter
 
-The primary endpoint is now **macro within-allele Spearman**: calculate a correlation for each held-out allele, then give eligible alleles equal weight. Eligibility requires at least 20 test rows and 10 distinct positive recorded half-lives. Main tables report the mean and SD of these per-fold macros. Pooled Spearman is secondary. The sequence-aware BLOSUM MLP is the reference; allele-ID Ridge is only an illustrative floor.
+**Current finding:** prediction depends strongly on both the representation and the downstream fitting procedure. Adding the same 256/64 MLP procedure improves both ESM-2 representations on held-out peptides, but BLOSUM + MLP still leads in both primary regimes. The earlier ESM-2 + Ridge versus BLOSUM + MLP comparison mixed these two factors; the follow-up narrows that gap without reversing the main ranking.
 
-## P1 — data-rich held-out peptides should show no pLM advantage
+This benchmark uses the **supplied Rasmussen table**, not the archived IEDB pilot: 28,166 9-mer measurements / 75 allele labels before excluding 1,135 engineered C67S rows; 27,031 pairs / 72 alleles after exclusion, retaining 4,711 zeros. The endpoint is macro within-allele Spearman, with ≥20 test rows and ≥10 distinct positive half-lives per eligible allele. Eligible alleles have equal weight, and zero labels remain in their correlations.
 
-**Prediction:** frozen protein representations offer little or no advantage over the sequence-aware supervised baseline when labels are plentiful and peptide groups are held out.
+## The representation × fitting-procedure comparison
 
-**Observed:** the MLP scores **0.612 ± 0.013**, ESM-2 independent means **0.168 ± 0.021**, and ESM-2 joint sequence encoding **0.215 ± 0.029**. Relative to the MLP, the mean arm's paired difference is **−0.443 [95% CI −0.471, −0.416]**; the joint arm's is **−0.396 [−0.424, −0.369]**.
+At full budget, peptide-holdout macro Spearman is **0.612** for BLOSUM + MLP, **0.360** for ESM-2 mean + MLP, and **0.377** for ESM-2 joint + MLP. On allele holdout the corresponding scores are **0.392**, **0.237**, and **0.252**.
 
-**Assessment:** consistent with P1 for these frozen representations and this fitting procedure. No conclusion about all protein models or all downstream heads follows.
+Holding the representation fixed, the peptide MLP-minus-Ridge gains are **+0.354 [+0.323, +0.385]** for BLOSUM, **+0.192 [+0.179, +0.204]** for ESM-2 mean, and **+0.162 [+0.124, +0.201]** for ESM-2 joint. With MLP procedures matched, the remaining peptide gaps against BLOSUM are **-0.252 [-0.279, -0.224]** and **-0.234 [-0.251, -0.217]**. These are descriptive paired 95% intervals, not causal shares of an error budget.
 
-## P2 — greater allele distance should expose an advantage over the sequence-aware baseline
+Full-budget macro within-allele Spearman; five-fold paired t intervals. These are descriptive contrasts of fitting procedures, not a causal decomposition.
 
-**Prediction:** a pLM should beat the BLOSUM-pseudosequence MLP on unseen alleles, with a larger benefit farther from the nearest training allele.
+| Representation | Peptide Ridge | Peptide MLP | Allele Ridge | Allele MLP |
+|---|---:|---:|---:|---:|
+| BLOSUM | 0.258 | 0.612 | 0.228 | 0.392 |
+| ESM-2 mean | 0.168 | 0.360 | 0.160 | 0.237 |
+| ESM-2 joint | 0.215 | 0.377 | 0.190 | 0.252 |
 
-**Observed on ordinary allele holdout:** MLP **0.392 ± 0.126**, independent means **0.160 ± 0.067**, joint encoding **0.190 ± 0.081**. Paired differences versus the MLP are **−0.233 [−0.322, −0.143]** and **−0.202 [−0.274, −0.131]**, respectively. Both remain worse than the sequence-aware reference. Beating allele-ID Ridge would not establish transfer to an unseen sequence and is not the hypothesis test.
+| Contrast (first minus second) | Peptide Δ [95% CI] | Allele Δ [95% CI] |
+|---|---:|---:|
+| BLOSUM MLP (reference) − BLOSUM Ridge | +0.354 [+0.323, +0.385] | +0.164 [+0.089, +0.240] |
+| ESM-2 mean + MLP − ESM-2 mean + Ridge | +0.192 [+0.179, +0.204] | +0.078 [+0.006, +0.150] |
+| ESM-2 joint + MLP − ESM-2 joint + Ridge | +0.162 [+0.124, +0.201] | +0.062 [+0.018, +0.106] |
+| ESM-2 mean + Ridge − BLOSUM Ridge | -0.090 [-0.107, -0.072] | -0.068 [-0.096, -0.041] |
+| ESM-2 joint + Ridge − BLOSUM Ridge | -0.043 [-0.069, -0.016] | -0.038 [-0.050, -0.026] |
+| ESM-2 mean + MLP − BLOSUM MLP (reference) | -0.252 [-0.279, -0.224] | -0.155 [-0.264, -0.046] |
+| ESM-2 joint + MLP − BLOSUM MLP (reference) | -0.234 [-0.251, -0.217] | -0.140 [-0.214, -0.066] |
+| BLOSUM Ridge − Allele-ID Ridge (floor) | -0.000 [-0.001, +0.001] | -0.000 [-0.001, +0.000] |
+| ESM-2 joint + Ridge − ESM-2 mean + Ridge | +0.047 [+0.027, +0.067] | +0.031 [-0.002, +0.063] |
+| ESM-2 joint + MLP − ESM-2 mean + MLP | +0.018 [-0.009, +0.044] | +0.015 [-0.046, +0.075] |
 
-**Distance result:** the disadvantage gets smaller as the nearest training allele becomes less similar. The headline figure includes both locus stress tests. The dataset has HLA-A and HLA-B only; no HLA-C measurements are available, so the tests train B/test A and train A/test B.
 
-| Stress test | MLP macro | ESM-2 mean macro | Mean − MLP [95% CI] | Joint macro | Joint − MLP [95% CI] |
-|---|---:|---:|---:|---:|---:|
-| Hold out A | 0.054 | 0.073 | +0.019 [−0.053, +0.086] | 0.125 | +0.071 [+0.004, +0.133] |
-| Hold out B | 0.070 | 0.069 | −0.002 [−0.058, +0.057] | 0.098 | +0.028 [−0.029, +0.086] |
+![Representation and head comparison](matched_heads.png)
 
-These per-locus intervals bootstrap paired allele scores (34 eligible alleles each), conditional on the fixed training/test split. They are not intervals from repeated independent locus experiments. Across only two locus folds, joint encoding's mean difference is **+0.050 [two-fold t CI −0.226, +0.325]**, which is highly imprecise. The A-holdout result is an exploratory signal at the nominal interval level; no adjustment for the many comparisons is applied.
+The follow-up adds 26 full-budget fits (13 per new approach) using unchanged cached ESM-2 inputs and the same MLP function, hidden widths, optimizer, grouped early stopping, and fold seed schedule as BLOSUM. Training-row hashes, test rows, and macro eligibility are checked against the original reference in [acceptance checks](../results/benchmark/mlp_extension_checks.json). No PCA was introduced for ESM-2 MLP and no new GPU extraction was performed.
 
-**Assessment:** no advantage in the primary allele regime, but the distance pattern and A-locus result are consistent with a possible benefit under greater shift. This is more nuanced than either “pretraining wins” or “pretraining never helps.” Scores under locus transfer remain low in absolute terms.
+This controls the MLP fitting procedure, not parameter count: input dimensions differ. Comparing Ridge to MLP also changes preprocessing (PCA is used only by Ridge), loss optimization, and regularization. Consequently, this is a decomposition of observed procedure contrasts, not a causal attribution to neural-network capacity alone. For example, the original ESM-2 joint Ridge minus BLOSUM MLP gap equals the joint-minus-BLOSUM contrast under Ridge minus the BLOSUM MLP-minus-Ridge contrast; the alternative path through ESM-2 MLP gives a different descriptive allocation. Neither path proves causality or statistical equivalence.
 
-All held-out alleles have **zero same-allele training rows**. `distance_stratified.csv` reports that actual zero-count stratum. The additional support panel uses measurements of the **nearest training allele**, explicitly a different variable. These are measurements in this dataset, not human population frequencies.
+### Why a linear HLA block cannot change within-allele ranking
+
+For concatenated independent features, the fitted scaler → PCA → Ridge pipeline remains affine in the original inputs: `prediction(p, a) = w_peptide · x(p) + w_HLA · h(a) + b`. Within one allele, `h(a)` is constant. Its contribution is an offset, which cannot change within-allele Spearman. Thus BLOSUM Ridge, allele-ID Ridge, and independent-mean ESM-2 Ridge cannot express allele-dependent peptide rankings for a fixed fitted model. Their peptide functions differ; they are not all the same predictor.
+
+BLOSUM Ridge minus allele-ID Ridge is **-0.000 [-0.001, +0.001]** on peptide holdout and **-0.000 [-0.001, +0.000]** on allele holdout. Their near agreement is consistent with this structural limitation, but **equality between separately trained models is not a mathematical identity**: joint PCA fitting, regularization selection, and the HLA feature block can change the learned peptide coefficients.
+
+Joint ESM-2 features depend on the peptide and allele together before the linear head; they can express context-dependent rankings. MLP heads can also learn interactions from independently concatenated features. This explains a representational capability, not proof that learned attention represents a physical complex or that the capability necessarily improves transfer.
+
+## H1 and P1–P4
+
+H1 proposes that general protein pretraining supplies an inductive bias that helps under scarcity or distribution shift. A deterministic encoding with fixed pretrained weights does not add label information beyond its input sequences; this motivates a finite-sample question rather than proving a distance or budget trend.
+
+### P1 — data-rich held-out peptides
+
+No tested ESM-2 approach beats BLOSUM + MLP. This remains true with the MLP procedure matched, although the original mixed-head deficit overstates the remaining matched-MLP gap. P1 is consistent with the observed full-budget results for these procedures; no claim about all protein models follows.
+
+### P2 — unseen alleles and distance
+
+Under matched MLP procedures, mean ESM-2 minus BLOSUM is **-0.155 [-0.264, -0.046]**, and joint ESM-2 minus BLOSUM is **-0.140 [-0.214, -0.066]**. There is no demonstrated advantage in the primary allele regime. Distance/support analyses remain exploratory. Every held-out allele has zero same-allele training rows; nearest-training-allele measurements are a separate support variable, not population coverage. Whole-locus transfer is retained only in [the appendix](locus_appendix.md).
 
 ## P3 — the pLM advantage should shrink with label budget
 
 **Prediction:** the arm-minus-MLP difference decreases as more labels become available.
 
-**Observed:** fold-mean differences decrease monotonically across the 10/25/50/100% grid for both pLM arms in both primary regimes. They are already negative at 10%. For allele holdout at 10%, the mean-arm difference is **−0.057 [−0.121, +0.007]** and the joint-arm difference **−0.028 [−0.087, +0.030]**: those intervals include zero, not evidence of a demonstrated benefit. At 100%, the corresponding differences are **−0.233 [−0.322, −0.143]** and **−0.202 [−0.274, −0.131]**.
+**Observed for the original Ridge-headed ESM-2 approaches:** fold-mean differences decrease monotonically across the 10/25/50/100% grid for both pLM arms in both primary regimes. They are already negative at 10%. For allele holdout at 10%, the mean-arm difference is **−0.057 [−0.121, +0.007]** and the joint-arm difference **−0.028 [−0.087, +0.030]**: those intervals include zero, not evidence of a demonstrated benefit. At 100%, the corresponding differences are **−0.233 [−0.322, −0.143]** and **−0.202 [−0.274, −0.131]**.
 
 **Assessment:** the direction predicted by P3 appears in the point estimates, but no positive average advantage is demonstrated on this budget range. This is one nested seeded subset schedule per fold, not a guarantee of monotonicity for other draws. Every plotted gap has a paired five-fold t interval; all values are in `paired_comparisons.csv`.
 
-## P4 — extraction matters more than which pLM is chosen
 
-**Prediction:** representation extraction affects results more than model identity.
+The new ESM-2 + MLP approaches were run at full budget only. P3 has not been tested with matched MLP heads across label budgets.
 
-**Observed:** using the same ESM-2 checkpoint and Ridge procedure, joint encoding improves macro Spearman over independent mean pooling by **+0.047 [+0.027, +0.067]** on peptide holdout and **+0.031 [−0.002, +0.063]** on allele holdout. This reverses the ordering under pooled Spearman and illustrates why the metric change matters. The allele interval includes zero.
 
-**Assessment:** the extraction comparison is measured; the “more than model choice” part remains untested because optional Arm D was not run. “Joint sequence encoding” describes the synthetic input `peptide + GGGG + pseudosequence`; it does not assert physical peptide–HLA interactions or a structural complex representation.
+### P4 — extraction versus model choice
+
+At the Ridge procedure, joint-minus-mean is **+0.047 [+0.027, +0.067]** for peptide holdout and **+0.031 [-0.002, +0.063]** for allele holdout. At the MLP procedure it is **+0.018 [-0.009, +0.044]** and **+0.015 [-0.046, +0.075]**, respectively. Extraction effects depend on the downstream procedure. A second pLM was not run, so the “more than model choice” comparison remains untested.
+
+**Assessment of H1:** a general pretraining advantage is not established. The new control supports a narrower conclusion: fitting procedure explains part of the original deficit, while a substantial disadvantage remains under the tested MLP procedure. Small-budget matched-MLP benefits remain untested.
 
 ## Strict peptide-sharing control
 
@@ -57,55 +88,9 @@ Permissive allele fold 0 trains on 22,879 rows. Removing every training pair who
 
 The joint-minus-MLP difference in the strict setting is **−0.138 [−0.256, −0.005]**; the mean-minus-MLP difference is **−0.170 [−0.273, −0.061]**. Intervals condition on this one fold. Removing peptide sharing also cuts the label budget substantially, so the reduction is **not an isolated causal estimate** of peptide sharing. No matched-size causal control is claimed.
 
-## Does H1 survive?
 
-The label-budget and distance patterns are consistent with the idea that pretraining's inductive bias matters more under scarcity or shift. A modest joint-encoding signal appears when HLA-A is entirely held out. However, the pLM arms lose to the sequence-aware reference in the main allele regime, and only two loci are available. **H1 remains plausible but is not established as a reliable general benefit.** The information-processing argument motivates this hypothesis; it does not mathematically guarantee the observed distance or budget trends.
+The original comparisons above are retained as historical controls. All seven approaches and paired-allele intervals are in [the full table](benchmark_table.md) and `results/benchmark/strict_vs_permissive.csv`.
 
-## Full comparison
-
-### peptide
-
-| Arm | Macro ρ ± fold SD | Δ vs MLP [95% CI] | Pooled ρ | Pooled − macro |
-|---|---:|---:|---:|---:|
-| BLOSUM MLP (reference) | 0.612 ± 0.013 | reference | 0.753 | +0.141 |
-| BLOSUM Ridge | 0.258 ± 0.022 | -0.354 [-0.385, -0.323] | 0.556 | +0.299 |
-| Allele-ID Ridge (floor) | 0.258 ± 0.022 | -0.354 [-0.384, -0.323] | 0.559 | +0.301 |
-| ESM-2 mean | 0.168 ± 0.021 | -0.443 [-0.471, -0.416] | 0.523 | +0.354 |
-| ESM-2 joint | 0.215 ± 0.029 | -0.396 [-0.424, -0.369] | 0.406 | +0.190 |
-
-### allele
-
-| Arm | Macro ρ ± fold SD | Δ vs MLP [95% CI] | Pooled ρ | Pooled − macro |
-|---|---:|---:|---:|---:|
-| BLOSUM MLP (reference) | 0.392 ± 0.126 | reference | 0.473 | +0.080 |
-| BLOSUM Ridge | 0.228 ± 0.073 | -0.164 [-0.240, -0.089] | 0.246 | +0.018 |
-| Allele-ID Ridge (floor) | 0.228 ± 0.073 | -0.164 [-0.240, -0.089] | 0.210 | -0.018 |
-| ESM-2 mean | 0.160 ± 0.067 | -0.233 [-0.322, -0.143] | 0.292 | +0.132 |
-| ESM-2 joint | 0.190 ± 0.081 | -0.202 [-0.274, -0.131] | 0.268 | +0.078 |
-
-### locus
-
-| Arm | Macro ρ ± fold SD | Δ vs MLP [95% CI] | Pooled ρ | Pooled − macro |
-|---|---:|---:|---:|---:|
-| BLOSUM MLP (reference) | 0.062 ± 0.012 | reference | 0.126 | +0.063 |
-| BLOSUM Ridge | 0.071 ± 0.039 | +0.009 [-0.443, +0.461] | 0.101 | +0.030 |
-| Allele-ID Ridge (floor) | 0.071 ± 0.038 | +0.009 [-0.438, +0.456] | 0.088 | +0.017 |
-| ESM-2 mean | 0.071 ± 0.003 | +0.008 [-0.122, +0.139] | 0.142 | +0.072 |
-| ESM-2 joint | 0.112 ± 0.019 | +0.050 [-0.226, +0.325] | 0.013 | -0.099 |
-
-### allele_strict
-
-| Arm | Macro ρ ± fold SD | Δ vs MLP [95% CI] | Pooled ρ | Pooled − macro |
-|---|---:|---:|---:|---:|
-| BLOSUM MLP (reference) | 0.147 | reference | 0.215 | +0.069 |
-| BLOSUM Ridge | 0.080 | -0.066 [-0.191, +0.066] | 0.124 | +0.044 |
-| Allele-ID Ridge (floor) | 0.083 | -0.064 [-0.188, +0.068] | 0.081 | -0.002 |
-| ESM-2 mean | -0.024 | -0.170 [-0.273, -0.061] | -0.010 | +0.014 |
-| ESM-2 joint | 0.009 | -0.138 [-0.256, -0.005] | 0.056 | +0.048 |
-
-Peptide/allele: paired t intervals over five folds. Locus summary: two-fold t interval, highly unstable; see per-locus paired-allele intervals. Strict: paired-allele bootstrap conditional on fold 0. Intervals do not account for shared training data or method selection.
-
-`pooled − macro` is a descriptive aggregation gap. It can reflect between-allele level shifts and unequal sample weighting, but it is not a mathematical decomposition or causal estimate of offset contribution. A negative gap is possible, as the locus results demonstrate.
 
 ## Zero-heavy alleles: lead with tier AUC
 
@@ -122,20 +107,31 @@ These AUCs use each allele's held-out-allele predictions. All arms and budgets a
 
 The allele/locus macro excludes HLA-A*68:02 (16 rows), HLA-A*69:01 (15 rows, 8 distinct positive values), HLA-B*13:02 (7 rows, 4 distinct positive values), and HLA-B*40:02 (19 rows). Peptide-fold eligibility is evaluated separately inside each test fold, so additional sparse alleles fail that threshold. Every exclusion, including zero-observation alleles in peptide folds, is in `excluded_alleles.csv`; all included and excluded counts are in `allele_metric_audit.csv`.
 
-## Compute and selection procedure
 
-The original frozen ESM-2 features were reused; **no new GPU extraction was needed for v2**. Their measured one-time extraction costs remain 23.40 GPU-function seconds for independent means and 83.88 seconds for joint encoding, with peak allocated GPU memory 1.43 and 1.48 GB. Inference throughput was about 623 individual sequences/s for the mean arm (5,705 unique peptide/HLA inputs) and 338 joint sequences/s for the joint arm (27,031 pairs). The units and deduplication differ; these are not identical throughput workloads. `compute.csv` also reports GPU-function throughput, CPU fit/predict wall time and incremental v2 CPU work. GPU times include worker model load but not image/container startup, transfer or a full billing total.
+## Noise ceiling
 
-All Ridge arms use the same StandardScaler → randomized PCA (up to 256) → RidgeCV architecture and selection procedure. Alpha is selected **independently for each arm/fold/budget** from 0.01 through 100,000 using training-only LOO, not fixed to a shared value. Full-budget selections are 1,000 for mean ESM-2, 10,000 for joint ESM-2, and 0.01–100 for the sequence Ridge controls. Identical selected values across an arm's folds are an outcome of tuning, not a fixed setting. PCA/scaling exclude outer test rows; their transforms are not refitted inside each internal LOO alpha-selection step. The MLP is the separate nonlinear reference, with training-only grouped early stopping. Per-fit parameters, seeds, training-row hashes and reuse provenance are in `fit_compute.csv` and `jobs/*.json`.
+The supplied table has no per-replicate values and no duplicate allele–peptide rows; `src/data.py` checks uniqueness. A dataset-specific assay-reproducibility ceiling therefore cannot be estimated. Rasmussen's methods specify geometric means of two independent experiments. External assay-repeatability evidence is documented in [the source review](assay_reproducibility.md), but does not establish a numerical ceiling for this benchmark. IEDB pilot conflicts and SPEARMINT membership flags are not replicate measurements of these labels.
 
-## Noise ceiling and limitations
+## Compute and reproducibility
 
-Per the source description in the brief, labels average at least two experiments. No per-replicate variance is supplied, so assay reproducibility caps achievable correlation by an **unknown** amount; effect sizes must be read against this unestimated ceiling.
+Mean and joint extraction originally cost 23.40 and 83.88 GPU-function seconds. The MLP follow-up reuses those same caches. `compute.csv` attributes their original extraction cost to each applicable approach and explicitly marks shared extraction; do not add those entries together as if extraction happened twice. Additional extraction cost for this follow-up is zero. Measured CPU fitting costs are reported separately. GPU-function timing excludes startup, transfer, and a full billing total; throughput workloads differ between separate sequences and joint pairs.
 
-Zeros may be left-censored but are modelled as exact recorded zeros. Engineered C67S constructs are excluded. The study covers 9-mers and class I only. The main allele split deliberately permits peptide sharing across alleles; the strict check covers one fold only. Exact peptide grouping does not remove near-sequence similarity. Only one common Ridge/PCA-head specification and one general pLM were evaluated; optional masked-likelihood, second-pLM, groove-domain, structure and contamination arms remain unrun. Pseudosequences consist of non-contiguous residues, and a synthetic linker can be out of distribution. General pretraining sequence exposure is unknown; no stability-trained checkpoint or NetMHCstabpan comparator is used.
+The five original approaches have 215 model/fold/budget jobs. The two full-budget MLP extensions add 26, for **241 jobs and 596,715 full-budget prediction rows**. The original jobs, v2 design, and splits are byte-preserved. `mlp_extension_design.json` records this post-v2 follow-up before fitting; it does not replace the original locked design. The v2 metric change followed inspection of v1 outcomes, and the new head comparison was motivated by v2 inspection: neither is fresh independent confirmation.
 
-Nominal fold t intervals are descriptive: folds share training rows and there are only five folds (two for locus). Paired-allele bootstrap intervals condition on the observed split and do not model dependence among similar alleles, replicate noise or method selection. Stratified comparisons are exploratory and unadjusted for multiplicity. The v2 metric reanalysis followed inspection of v1 outcomes; it is not a fresh confirmatory experiment. The 15 new locus/strict fits followed the saved v2 design. The 200 original fits and v1 reports remain archived with unchanged predictions.
+The Ridge procedure remains training-only StandardScaler → randomized PCA (up to 256) → independently tuned RidgeCV over 0.01–100,000. Scaling/PCA are not refitted within internal LOO alpha selection. The MLP still uses training-only group validation. Per-fit metadata record training-row hashes, seed, null alpha, and integer best epoch for each new fit.
 
-Dataset counts describe only this measurement collection, not human population representation. No laboratory savings or clinical benefit is claimed. The previous IEDB diversity-acquisition result remains separate, with its final test untouched. Feature geometry is a hypothesized mechanism, not a causal finding; uncertainty-based acquisition was never tested, so the conclusion is “pure diversity lost,” not “active learning does not work.”
+## Limitations
 
-Method references: [SciPy paired t confidence intervals](https://docs.scipy.org/doc/scipy/reference/generated/scipy.stats.ttest_rel.html), [training-only RidgeCV alpha selection](https://scikit-learn.org/stable/modules/generated/sklearn.linear_model.RidgeCV.html).
+Zeros may be left-censored but are treated as exact. Engineered C67S constructs are excluded. Main allele evaluation allows peptide sharing; strict evaluation is one fold with fewer labels, not an isolated causal estimate. Near-sequence similarity is not clustered. Only one frozen pLM is tested, and its non-contiguous HLA pseudosequence/synthetic linker can be out of distribution. Pretraining exposure is unknown. No SPEARMINT/MINT stability-trained checkpoint or NetMHCstabpan comparator is used; training on this dataset would compromise that comparison.
+
+Five-fold t intervals are nominal and descriptive because folds share training rows. Allele bootstraps condition on a fixed split and do not model related-allele dependence, replicate noise, or method selection. No multiple-comparison adjustment is made. Two locus folds cannot support a precise general transfer claim. Model point predictions have no calibrated uncertainty interval.
+
+Second-pLM, groove-domain, masked-likelihood, structural-prediction, inverse-folding, and broader contamination studies remain unrun. The archived IEDB active-learning pilot remains separate with its final test untouched; uncertainty acquisition was never tested. Dataset coverage is not population representation. No laboratory savings, clinical benefit, or immunogenicity improvement is claimed.
+
+## Supporting outputs
+
+- [Full seven-approach tables, including strict and locus](benchmark_table.md)
+- [Matched-head comparison table](matched_head_table.md) and [machine-readable contrasts](../results/benchmark/matched_head_comparisons.csv)
+- [Learning-gap figure](learning_gap.png): new MLP approaches have only a 100% point
+- [Compute figure](compute_performance.png)
+- [Historical v2 report](archive/v2/benchmark_findings.md)

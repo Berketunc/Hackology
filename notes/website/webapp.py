@@ -3,8 +3,8 @@ from fastapi import FastAPI
 from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
-from .config import ROOT
-from . import workspace
+from src.config import ROOT
+from src import workspace
 
 
 class PairRequest(BaseModel):

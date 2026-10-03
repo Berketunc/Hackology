@@ -12,9 +12,10 @@ from .evaluate import PRIMARY,allele_metrics,paired_delta_ci,stratify_by_allele_
 
 OUT=RESULTS/'benchmark'
 LABELS={'blosum_nn':'BLOSUM MLP (reference)','blosum_ridge':'BLOSUM Ridge',
-        'onehot_ridge':'Allele-ID Ridge (floor)','esm2_mean':'ESM-2 mean','esm2_joint':'ESM-2 joint'}
-COLORS=dict(zip(LABELS,['#2563eb','#6b7280','#c0a1c9','#ea580c','#059669']))
-PLMS=['esm2_mean','esm2_joint']
+        'onehot_ridge':'Allele-ID Ridge (floor)','esm2_mean':'ESM-2 mean + Ridge','esm2_joint':'ESM-2 joint + Ridge',
+        'esm2_mean_nn':'ESM-2 mean + MLP','esm2_joint_nn':'ESM-2 joint + MLP'}
+COLORS=dict(zip(LABELS,['#2563eb','#6b7280','#c0a1c9','#ea580c','#059669','#b45309','#0f766e']))
+PLMS=['esm2_mean','esm2_joint','esm2_mean_nn','esm2_joint_nn']
 REGIMES=['peptide','allele','locus','allele_strict']
 
 
@@ -93,7 +94,7 @@ def distance_analysis(rows,alleles):
     for ax,field,order in [(axes[1],'identity_band',bands),(axes[2],'support_band',['1–100','101–500','501–1000','>1000'])]:
         for j,arm in enumerate(PLMS):
             g=comparisons[(comparisons.stratifier==field)&(comparisons.arm==arm)].set_index('band').reindex(order)
-            x=np.arange(len(order))+(j-.5)*.12
+            x=np.arange(len(order))+(j-(len(PLMS)-1)/2)*.12
             ax.errorbar(x,g.delta,yerr=np.maximum(0,np.vstack([g.delta-g.ci_low,g.ci_high-g.delta])),
                         marker='o',capsize=3,color=COLORS[arm],label=LABELS[arm])
         ax.axhline(0,color='black',lw=.8);ax.set_xticks(range(len(order)),order,rotation=30,ha='right')
@@ -157,14 +158,18 @@ def controls(alleles):
 def compute_plot(summary):
     fit=pd.read_csv(OUT/'fit_compute.csv'); rows=[]
     for arm in LABELS:
-        path=DATA/'processed'/f'{arm}_meta.json'
+        representation=arm.removesuffix('_nn') if arm.startswith('esm2_') else arm
+        path=DATA/'processed'/f'{representation}_meta.json'
         m=json.loads(path.read_text()) if path.exists() else {}
         seconds=m.get('gpu_seconds',0); n=sum(b['sequences'] for b in m.get('batches',[]))
-        rows.append(dict(arm=arm,gpu_seconds=seconds,peak_gpu_memory_bytes=m.get('peak_gpu_memory_bytes',0),
+        rows.append(dict(arm=arm,representation=representation,gpu_seconds=seconds,
+            additional_extension_gpu_seconds=0,shared_extraction=arm in ['esm2_mean_nn','esm2_joint_nn'],
+            peak_gpu_memory_bytes=m.get('peak_gpu_memory_bytes',0),
             extraction_sequences=n,inference_sequences_per_second=n/m['inference_seconds'] if n else np.nan,
             gpu_function_sequences_per_second=n/seconds if n else np.nan,
             cpu_fit_predict_seconds_full_budget=fit[(fit.arm==arm)&(fit.fraction==1)].fit_predict_cpu_wall_seconds.sum(),
-            new_v2_cpu_fit_predict_seconds=fit[(fit.arm==arm)&fit.split_regime.isin(['locus','allele_strict'])].fit_predict_cpu_wall_seconds.sum()))
+            new_v2_cpu_fit_predict_seconds=0 if arm.endswith('_nn') and arm.startswith('esm2_') else fit[(fit.arm==arm)&fit.split_regime.isin(['locus','allele_strict'])].fit_predict_cpu_wall_seconds.sum(),
+            extension_cpu_fit_predict_seconds=fit[fit.arm==arm].fit_predict_cpu_wall_seconds.sum() if arm in ['esm2_mean_nn','esm2_joint_nn'] else 0))
     compute=pd.DataFrame(rows);compute.to_csv(OUT/'compute.csv',index=False)
     fig,axes=plt.subplots(1,2,figsize=(12,4.5),layout='constrained')
     for ax,regime in zip(axes,['peptide','allele']):
@@ -176,9 +181,50 @@ def compute_plot(summary):
             ax.annotate(label,(row.gpu_seconds,g['mean']),xytext=offset,textcoords='offset points',
                         ha='left' if row.gpu_seconds==0 else 'right',fontsize=8)
         ax.set(xlabel='One-time extraction GPU seconds',ylabel='Macro within-allele Spearman',title=f'Held-out {regime}')
-        ax.set_xscale('symlog',linthresh=1);ax.grid(alpha=.2)
+        ax.set_xscale('symlog',linthresh=1);ax.margins(y=.15);ax.grid(alpha=.2)
     fig.suptitle('CPU fitting and throughput are reported separately; GPU seconds are not total cost.',fontsize=10)
     save_figure(fig,'compute_performance.png')
+
+
+def matched_head_analysis(scores,alleles):
+    """Paired contrasts, not a causal attribution or an equivalence test."""
+    comparisons=[('blosum_nn','blosum_ridge','head'),
+        ('esm2_mean_nn','esm2_mean','head'),('esm2_joint_nn','esm2_joint','head'),
+        ('esm2_mean','blosum_ridge','representation_ridge'),('esm2_joint','blosum_ridge','representation_ridge'),
+        ('esm2_mean_nn','blosum_nn','representation_mlp'),('esm2_joint_nn','blosum_nn','representation_mlp'),
+        ('blosum_ridge','onehot_ridge','hla_block'),('esm2_joint','esm2_mean','extraction_ridge'),
+        ('esm2_joint_nn','esm2_mean_nn','extraction_mlp')]
+    full=scores[(scores.metric==PRIMARY)&(scores.fraction==1)]
+    contrasts=[]
+    for regime,g in full.groupby('split_regime'):
+        for arm,baseline,kind in comparisons:
+            if not {arm,baseline}<=set(g.arm): continue
+            c=allele_delta(alleles[alleles.split_regime==regime],arm,baseline) if regime=='allele_strict' else paired_delta_ci(g[g.arm==arm],g[g.arm==baseline])
+            contrasts.append(dict(arm=arm,baseline=baseline,comparison=kind,split_regime=regime,fraction=1,**c))
+    contrasts=pd.DataFrame(contrasts)
+    contrasts.to_csv(OUT/'matched_head_comparisons.csv',index=False)
+    table=['# Matched-head follow-up', '', 'Full-budget macro within-allele Spearman; five-fold paired t intervals. These are descriptive contrasts of fitting procedures, not a causal decomposition.', '',
+        '| Representation | Peptide Ridge | Peptide MLP | Allele Ridge | Allele MLP |', '|---|---:|---:|---:|---:|']
+    for name,ridge,mlp in [('BLOSUM','blosum_ridge','blosum_nn'),('ESM-2 mean','esm2_mean','esm2_mean_nn'),('ESM-2 joint','esm2_joint','esm2_joint_nn')]:
+        values=[full[(full.arm==a)&(full.split_regime==r)].value.mean() for r in ['peptide','allele'] for a in [ridge,mlp]]
+        table.append('| '+name+' | '+' | '.join(f'{v:.3f}' for v in values)+' |')
+    table+=['', '| Contrast (first minus second) | Peptide Δ [95% CI] | Allele Δ [95% CI] |', '|---|---:|---:|']
+    for arm,baseline,kind in comparisons:
+        vals=[]
+        for regime in ['peptide','allele']:
+            c=contrasts[(contrasts.arm==arm)&(contrasts.baseline==baseline)&(contrasts.split_regime==regime)].iloc[0]
+            vals.append(f'{c.delta:+.3f} [{c.ci_low:+.3f}, {c.ci_high:+.3f}]')
+        table.append(f'| {LABELS[arm]} − {LABELS[baseline]} | '+' | '.join(vals)+' |')
+    (REPORTS/'matched_head_table.md').write_text('\n'.join(table)+'\n')
+    fig,axes=plt.subplots(1,2,figsize=(12,4.6),layout='constrained')
+    for ax,regime in zip(axes,['peptide','allele']):
+        for label,ridge,mlp in [('BLOSUM','blosum_ridge','blosum_nn'),('ESM-2 mean','esm2_mean','esm2_mean_nn'),('ESM-2 joint','esm2_joint','esm2_joint_nn')]:
+            means=[full[(full.arm==a)&(full.split_regime==regime)].value.mean() for a in [ridge,mlp]]
+            ax.plot([0,1],means,'o-',label=label,color=COLORS[mlp])
+        ax.set(xticks=[0,1],xticklabels=['Ridge + PCA','MLP (no PCA)'],ylabel='Macro within-allele Spearman',title=f'Held-out {regime}',ylim=(0,.7))
+        ax.grid(alpha=.2);ax.legend(fontsize=8)
+    fig.suptitle('Representation × fitting procedure; full-budget means. Paired intervals in matched_head_table.md.',fontsize=10)
+    save_figure(fig,'matched_heads.png')
 
 
 def main():
@@ -201,6 +247,7 @@ def main():
     a=per_allele(rows);a.to_csv(OUT/'per_allele.csv',index=False)
     a[(a.split_regime=='allele') & a.high_zero_fraction].to_csv(OUT/'high_zero_summary.csv',index=False)
     REPORTS.mkdir(exist_ok=True)
+    matched_head_analysis(scores,a)
     controls(a);distance_analysis(rows,a);learning_figures(scores,ci);compute_plot(summary)
     tables=[]
     for regime in REGIMES:

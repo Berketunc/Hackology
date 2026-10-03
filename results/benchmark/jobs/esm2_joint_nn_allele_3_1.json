@@ -1,0 +1,12 @@
+{
+  "arm": "esm2_joint_nn",
+  "split_regime": "allele",
+  "fold": 3,
+  "fraction": 1.0,
+  "n_train": 21704,
+  "seed": 3,
+  "training_row_ids_sha256": "7ba51e28af2de2a215be146b4f20d8ca58e076582f4586f9f8255ddb79a97ab4",
+  "fit_predict_cpu_wall_seconds": 42.71434387500631,
+  "alpha": null,
+  "best_epoch": 21
+}
