@@ -1,0 +1,20 @@
+{
+  "arm": "blosum_nn",
+  "split_regime": "allele",
+  "fold": 2,
+  "patience": 30,
+  "n_train": 21409,
+  "seed": 2,
+  "training_row_ids_sha256": "2a1f9594d8e994012108ac7113ce949eefc8b1c748ee79253299858ea4f707ce",
+  "best_epoch": 16,
+  "seconds": 3.318250166979851,
+  "pooled_spearman": 0.5132481934726801,
+  "pearson": 0.4699369431700139,
+  "rmse_log1p": 1.051768474954097,
+  "auc_2h": 0.7780461499712612,
+  "auc_6h": 0.781788994587502,
+  "macro_within_allele_spearman": 0.4432579184993609,
+  "pooled_minus_macro": 0.06999027497331922,
+  "macro_eligible_alleles": 14,
+  "macro_excluded_alleles": 0
+}

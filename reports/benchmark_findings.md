@@ -108,6 +108,21 @@ These AUCs use each allele's held-out-allele predictions. All arms and budgets a
 The allele/locus macro excludes HLA-A*68:02 (16 rows), HLA-A*69:01 (15 rows, 8 distinct positive values), HLA-B*13:02 (7 rows, 4 distinct positive values), and HLA-B*40:02 (19 rows). Peptide-fold eligibility is evaluated separately inside each test fold, so additional sparse alleles fail that threshold. Every exclusion, including zero-observation alleles in peptide folds, is in `excluded_alleles.csv`; all included and excluded counts are in `allele_metric_audit.csv`.
 
 
+## Post-hoc robustness: doubling early-stopping patience
+
+The original allele fits selected epoch ≤2 in **3/5 joint ESM-2** folds and **1/5 mean ESM-2** folds. This prompted a single exploratory change: patience **15 → 30**, keeping the 150-epoch limit, allele-grouped inner validation, features, optimizer, widths, and fold seeds unchanged. All three MLP approaches, including BLOSUM, were rerun on five allele folds and the strict fold: **18 fits**, saved separately from the locked benchmark.
+
+| Approach minus BLOSUM MLP | Allele Δ, patience 15 [95% CI] | Allele Δ, patience 30 [95% CI] |
+|---|---:|---:|
+| ESM-2 mean + MLP | -0.155 [-0.264, -0.046] | -0.158 [-0.264, -0.052] |
+| ESM-2 joint + MLP | -0.140 [-0.214, -0.066] | -0.136 [-0.218, -0.054] |
+
+Both ESM-2 MLP approaches remain below BLOSUM MLP, with nominal paired intervals excluding zero. **5/18 fits still select epoch ≤2 at patience 30.** This increase does not eliminate the early-checkpoint pattern; it does not establish that patience or any other single factor caused the original gap. An epoch-1 checkpoint is trained, and the selected checkpoint can remain early after many subsequent epochs were attempted. We stopped at the planned sensitivity: no patience 60 or alternative validation split.
+
+Five-fold intervals remain nominal and exploratory, and this analysis was chosen after inspecting results. Strict-fold comparisons use a paired-allele bootstrap conditional on that split. Peptide folds were not rerun at patience 30, so their sensitivity to patience is **untested**. The main tables and headline retain the original patience-15 procedure.
+
+See [the complete sensitivity report and stopping-epoch appendix](patience_sensitivity.md), including every original full-budget MLP best epoch, strict results, and within-approach changes; [acceptance checks](../results/benchmark/patience_sensitivity/checks.json) verify unchanged protected outputs and matching training rows, test rows, and eligibility.
+
 ## Noise ceiling
 
 The supplied table has no per-replicate values and no duplicate allele–peptide rows; `src/data.py` checks uniqueness. A dataset-specific assay-reproducibility ceiling therefore cannot be estimated. Rasmussen's methods specify geometric means of two independent experiments. External assay-repeatability evidence is documented in [the source review](assay_reproducibility.md), but does not establish a numerical ceiling for this benchmark. IEDB pilot conflicts and SPEARMINT membership flags are not replicate measurements of these labels.
@@ -127,6 +142,12 @@ Zeros may be left-censored but are treated as exact. Engineered C67S constructs 
 Five-fold t intervals are nominal and descriptive because folds share training rows. Allele bootstraps condition on a fixed split and do not model related-allele dependence, replicate noise, or method selection. No multiple-comparison adjustment is made. Two locus folds cannot support a precise general transfer claim. Model point predictions have no calibrated uncertainty interval.
 
 Second-pLM, groove-domain, masked-likelihood, structural-prediction, inverse-folding, and broader contamination studies remain unrun. The archived IEDB active-learning pilot remains separate with its final test untouched; uncertainty acquisition was never tested. Dataset coverage is not population representation. No laboratory savings, clinical benefit, or immunogenicity improvement is claimed.
+
+### Input scope and omitted structure models
+
+The supplied `hla_seq` is a 182-residue α1/α2 groove-domain fragment, without the α3 domain or β2-microglobulin. The actual ESM-2 inputs here are even shorter: the supplied **34 contact residues**, embedded separately or after the synthetic peptide linker. No full native HLA chain or complete complex is encoded. This mismatch to natural protein sequences is a plausible contributor to the observed performance, but its effect has not been isolated; embedding the 182-residue fragment remains an unrun comparison.
+
+A full structure-prediction comparison across 28,166 supplied pairs would require additional large-scale inference, structural input preparation, and a validated mapping from structure to dissociation half-life, beyond this study's compute scope. We have not measured a runtime and do not claim a precise GPU-day estimate. Boltz-2's documented affinity module targets small-molecule–protein binding and reports an IC50-like endpoint, rather than peptide–HLA half-life; it is not a drop-in comparator. Even in a simple two-state kinetic model, `t½ = ln(2)/k_off` whereas `K_d = k_off/k_on`, so equilibrium affinity alone does not determine stability. [Official Boltz prediction documentation](https://github.com/jwohlwend/boltz/blob/main/docs/prediction.md#properties-affinity).
 
 ## Supporting outputs
 

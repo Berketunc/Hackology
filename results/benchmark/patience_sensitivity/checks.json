@@ -1,0 +1,45 @@
+{
+  "passed": true,
+  "fits": 18,
+  "prediction_rows": 93549,
+  "original_benchmark_unchanged": true,
+  "training_hashes_match": true,
+  "test_rows_match": true,
+  "macro_eligibility_matches": true,
+  "remaining_best_epoch_le2": [
+    {
+      "arm": "esm2_mean_nn",
+      "split_regime": "allele",
+      "fold": 0,
+      "best_epoch": 1
+    },
+    {
+      "arm": "esm2_joint_nn",
+      "split_regime": "allele",
+      "fold": 0,
+      "best_epoch": 1
+    },
+    {
+      "arm": "esm2_joint_nn",
+      "split_regime": "allele",
+      "fold": 2,
+      "best_epoch": 1
+    },
+    {
+      "arm": "esm2_joint_nn",
+      "split_regime": "allele",
+      "fold": 4,
+      "best_epoch": 2
+    },
+    {
+      "arm": "esm2_joint_nn",
+      "split_regime": "allele_strict",
+      "fold": 0,
+      "best_epoch": 1
+    }
+  ],
+  "new_gpu_extraction": false,
+  "baseline_patience": 15,
+  "patience": 30,
+  "status": "Completed one post-hoc sensitivity; no further patience search"
+}

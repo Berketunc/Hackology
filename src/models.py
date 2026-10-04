@@ -26,7 +26,7 @@ class BaselineNN:
             return self.net(torch.as_tensor(self.scaler.transform(X), dtype=torch.float32)).numpy().ravel()
 
 
-def fit_baseline_nn(X_train, y_train, seed=0, groups=None, max_epochs=150):
+def fit_baseline_nn(X_train, y_train, seed=0, groups=None, max_epochs=150, patience=15):
     """256/64 ReLU network; inner validation groups never enter the scaler fit."""
     torch.manual_seed(seed)
     torch.set_num_threads(4)
@@ -61,7 +61,7 @@ def fit_baseline_nn(X_train, y_train, seed=0, groups=None, max_epochs=150):
             model.best_epoch_ = epoch + 1
         else:
             stale += 1
-        if stale >= 15:
+        if stale >= patience:
             break
     model.net.load_state_dict(best_state)
     model.net.eval()

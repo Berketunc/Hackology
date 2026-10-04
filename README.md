@@ -140,6 +140,10 @@ See [the full findings](reports/benchmark_findings.md), [all seven-approach tabl
 
 ![Original label-budget gaps and full-budget MLP follow-up](reports/learning_gap.png)
 
+### Post-hoc patience check
+
+A separate **18-fit** study doubled patience from 15 to 30 for BLOSUM and both ESM-2 MLPs on the allele and strict regimes. At patience 30, the allele gaps against BLOSUM are **-0.158 [-0.264, -0.052]** for mean ESM-2 and **-0.136 [-0.218, -0.054]** for joint ESM-2. **5/18** fits still select epoch ≤2; no further patience or validation-split search was performed. This is a post-hoc sensitivity check, not a replacement for the main patience-15 tables, and peptide patience sensitivity remains untested. [Results and per-fold stopping epochs](reports/patience_sensitivity.md).
+
 ## Compute cost
 
 Recorded costs from [compute.csv](results/benchmark/compute.csv):
@@ -182,6 +186,9 @@ python -m src.run_benchmark --arms esm2_mean_nn --fractions 1.0
 python -m src.run_benchmark --arms esm2_joint_nn --fractions 1.0
 python -m src.report
 python -m scripts.check_mlp_extension
+
+# Optional reproduction of the separate post-hoc patience check (18 fits).
+python -m scripts.patience_sensitivity
 python -m pytest -q
 ```
 
@@ -207,7 +214,7 @@ The original v2 `design.json` stays locked. The 26-fit follow-up is separately l
 
 ## Validation
 
-The current Python suite has **17 passing tests** covering split boundaries, zero handling, macro eligibility and weighting, paired-CI alignment, training-only preprocessing, cache checks, the corrected IEDB audit, input validation, window positions, tier boundaries, agreement with saved predictions, and held-out routing of novel allele pairings.
+The current Python suite has **18 passing tests** covering split boundaries, zero handling, macro eligibility and weighting, paired-CI alignment, training-only preprocessing, cache checks, the corrected IEDB audit, input validation, window positions, tier boundaries, agreement with saved predictions, reproduction of a reference fit with the unchanged default patience, and held-out routing of novel allele pairings.
 
 ```sh
 python -m pytest -q
@@ -224,6 +231,8 @@ python scripts/check_intro.py
 ```
 
 Recorded verification:
+
+- [Patience sensitivity](results/benchmark/patience_sensitivity/checks.json): 18 fits with matching training/test rows and eligibility; protected main-benchmark outputs remain byte-identical. The [figure check](results/benchmark/patience_sensitivity/figure_checks.json) regenerates seven-model figures in isolation and reproduces the matched-head table.
 
 - [Original v2 validation](results/benchmark/validation.json): 215 jobs and 426,225 predictions before the follow-up. [Matched-MLP acceptance checks](results/benchmark/mlp_extension_checks.json) verify all 26 new fits, 241 total jobs, 596,715 full-budget predictions, matching training hashes/test rows/eligibility, and unchanged original jobs and splits.
 - [Clean-clone reproduction](results/benchmark/reproducibility.json): at benchmark commit `805fad9`, a fresh Python 3.11 environment without the original organizer file reproduced all **39 baseline fits / 255,735 predictions with maximum absolute difference 0.0**. Regenerated comparison tables matched exactly; the then-current 12 tests passed. Full ESM-2 extraction was not repeated in that clone. This is a benchmark reproduction check, not a clean-clone verification of subsequent website changes.
@@ -248,6 +257,8 @@ Read the [source review](archive/iedb_pilot/reports/source_review.md), [overlap 
 - **Generalization:** ordinary allele splits permit peptide sharing; near-sequence similarity is not clustered. The strict control uses one fold and also reduces training size. Only two locus holdouts are available.
 - **Model scope:** one frozen pLM, two extraction strategies, a common Ridge/PCA procedure, and the same MLP procedure applied to BLOSUM and both ESM-2 inputs. The pseudosequence and synthetic linker may be out of distribution for the pretrained model.
 - **Uncertainty:** benchmark intervals have the dependence and selection limitations stated above. The website has no calibrated per-prediction interval or probability of correctness.
+- **Input truncation:** supplied `hla_seq` covers the 182-residue α1/α2 domain, not a full chain or β2-microglobulin. The tested pLM inputs use only the 34 contact residues, so natural-chain context is absent; its impact has not been isolated.
+- **Structure-model scope:** a dataset-wide structure comparison needs substantial additional inference and a validated link to half-life. Boltz-2’s documented affinity output targets small molecules and an IC50-like endpoint, not peptide–HLA dissociation stability. See the [full rationale](reports/benchmark_findings.md#input-scope-and-omitted-structure-models); no GPU-day runtime estimate was measured.
 - **Unrun extensions:** zero-shot masked likelihood, a second pLM, the 182-residue groove representation, structural analysis, and broader pretraining-contamination analysis. Uncertainty-based active learning also remains unrun.
 - **Claims:** no demonstrated laboratory savings, therapeutic efficacy, immunogenicity, clinical benefit, or numerical noise ceiling is claimed.
 

@@ -1,0 +1,7 @@
+arm,split_regime,contrast,delta,ci_low,ci_high,n_pairs,n_unscorable_pairs,pairing_unit,ci_method,confidence
+blosum_nn,allele,patience30_minus_patience15,0.0,0.0,0.0,5,0,fold,t,0.95
+esm2_mean_nn,allele,patience30_minus_patience15,-0.0033065369954009757,-0.012486955451437553,0.005873881460635602,5,0,fold,t,0.95
+esm2_joint_nn,allele,patience30_minus_patience15,0.004113913183107665,-0.004280699866846295,0.012508526233061625,5,0,fold,t,0.95
+blosum_nn,allele_strict,patience30_minus_patience15,0.0,0.0,0.0,12,0,allele,bootstrap,0.95
+esm2_mean_nn,allele_strict,patience30_minus_patience15,0.0,0.0,0.0,12,0,allele,bootstrap,0.95
+esm2_joint_nn,allele_strict,patience30_minus_patience15,0.0,0.0,0.0,12,0,allele,bootstrap,0.95

@@ -1,0 +1,7 @@
+{
+  "passed": true,
+  "arms": 7,
+  "matched_head_table_exact": true,
+  "main_outputs_untouched": true,
+  "method": "Regenerated compute and matched-head figures in an isolated temporary directory"
+}

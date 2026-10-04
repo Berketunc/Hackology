@@ -1,0 +1,20 @@
+{
+  "arm": "esm2_mean_nn",
+  "split_regime": "allele",
+  "fold": 0,
+  "patience": 30,
+  "n_train": 22879,
+  "seed": 0,
+  "training_row_ids_sha256": "fa0ada10e785e1e10a02df87a992c8906f8bea546a168c60cbd653e23f703299",
+  "best_epoch": 1,
+  "seconds": 6.0761776250146795,
+  "pooled_spearman": 0.06217544253574167,
+  "pearson": 0.08519406074576671,
+  "rmse_log1p": 1.2735186143702895,
+  "auc_2h": 0.5412553652458909,
+  "auc_6h": 0.5452361137857988,
+  "macro_within_allele_spearman": 0.04684569870212029,
+  "pooled_minus_macro": 0.01532974383362138,
+  "macro_eligible_alleles": 12,
+  "macro_excluded_alleles": 3
+}
